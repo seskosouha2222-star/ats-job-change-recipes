@@ -46,6 +46,37 @@ def test_slowdown_needs_more_closures_than_openings():
     assert [s["signal"] for s in signals] == ["hiring_slowdown"]
 
 
+def test_changed_posting_is_remembered_but_not_counted_as_new():
+    # Regression: an existing posting moved into a new department/country must update the history, so a later new
+    # role there is not reported as a first-time signal; the edit itself is never a new role or a surge.
+    state = {"lever:x": {"departments": ["Sales"], "countries": ["France"]}}
+    base = {"recordType": "job", "ats": "lever", "companySlug": "x"}
+    changed = [{**base, "changeType": "changed", "jobId": "1", "title": "Data Lead", "department": "Data",
+                "country": "Spain", "changedFields": ["department", "country"]}]
+    signals, state = hiring_signals.compute_signals(changed, state, surge_min=1)
+    assert signals == []
+    assert "Data" in state["lever:x"]["departments"] and "Spain" in state["lever:x"]["countries"]
+    new = [{**base, "changeType": "new", "jobId": "2", "title": "Data Analyst", "department": "Data",
+            "country": "Spain"}]
+    signals, _ = hiring_signals.compute_signals(new, state)
+    assert not any(s["signal"] in ("new_department", "new_country") for s in signals)
+
+
+def test_reopened_role_counts_as_an_opening():
+    state = {"lever:x": {"departments": ["Sales"], "countries": ["France"]}}
+    reopened = [{"recordType": "job", "changeType": "reopened", "ats": "lever", "companySlug": "x", "jobId": "9",
+                 "title": "Legal Counsel", "department": "Legal", "country": "France"}]
+    signals, _ = hiring_signals.compute_signals(reopened, state)
+    assert [(s["signal"], s["detail"]) for s in signals] == [("new_department", "first department: Legal")]
+
+
+def test_zapier_recipe_routes_every_change_type():
+    text = (HERE.parent / "no-code" / "make-zapier-sheets.md").read_text()
+    section = text.split("## Remove expired postings")[1].split("## ")[0]
+    for change in ("new", "reopened", "changed", "closed", "unmatched"):
+        assert f"`{change}`" in section, change
+
+
 def test_state_input_is_not_mutated():
     _, state = hiring_signals.compute_signals(RUN1, {})
     snapshot = json.dumps(state, sort_keys=True)

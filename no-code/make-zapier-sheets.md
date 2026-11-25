@@ -11,14 +11,17 @@ All recipes start the same way, in the Apify Console:
 ## Slack alert for every new role (Make)
 1. Trigger: **Apify → Watch Task Runs** (your task, status succeeded).
 2. **Apify → Get Dataset Items**: dataset = the run's default dataset, view `jobs`.
-3. **Filter**: `changeType` equals `new`.
+3. **Filter**: `changeType` equals `new` or `reopened` (a role the company had closed and posted again).
 4. **Slack → Create a Message**: `New role at {{companyName}}{{companySlug}}: {{title}} {{url}}`.
 
 ## Remove expired postings from a job board (Zapier)
 1. Trigger: **Apify → Finished Task Run**.
 2. Action: **Apify → Fetch Dataset Items** (view `jobs`).
-3. Paths: `changeType` = `new` → create the posting; `changed` → update it; `closed` or `unmatched` → unpublish it.
-   Use `ats` + `companySlug` + `jobId` as the posting's external ID.
+3. Paths, using `ats` + `companySlug` + `jobId` as the posting's external ID:
+   - `new` → create the posting;
+   - `reopened` → find the posting by external ID and republish it, or create it if you deleted it on closure;
+   - `changed` → update it;
+   - `closed` or `unmatched` → unpublish it.
 
 ## Hiring tracker in Google Sheets (Make or Zapier)
 1. Same trigger and dataset step as above (view `jobs`).

@@ -9,7 +9,9 @@ Turns the job-level change feed into a short list of company signals a sales, in
 - hiring_slowdown  a company closed at least --slowdown-min roles in one run and closed more than it opened
 
 Baseline records (the first run for a company) only seed the local history: they never raise a signal, so the
-first run does not flood you with "new department" noise.
+first run does not flood you with "new department" noise. Existing postings that the feed reports again (`changed`,
+`unchanged` in snapshot mode, `unmatched`) also update the history, so a department or country is remembered even when
+it first appeared through an edited posting, but they never count as new roles.
 
 Usage
   # run the Actor with your own Apify token, then compute signals
@@ -41,6 +43,7 @@ from pathlib import Path
 
 ACTOR = "agitools/ats-jobs-delta"
 SIGNAL_TYPES = ("new_department", "new_country", "hiring_surge", "hiring_slowdown")
+OBSERVED_TYPES = ("changed", "unchanged", "unmatched")
 
 
 def company_key(record: dict) -> str:
@@ -54,7 +57,8 @@ def compute_signals(records: list[dict], state: dict, surge_min: int = 5,
     `state` maps "ats:slug" to {"departments": [...], "countries": [...]}. The input is never mutated."""
     history = {k: {"departments": set(v.get("departments", [])), "countries": set(v.get("countries", []))}
                for k, v in state.items()}
-    companies: dict[str, dict] = defaultdict(lambda: {"name": None, "baseline": [], "new": [], "closed": []})
+    companies: dict[str, dict] = defaultdict(lambda: {"name": None, "baseline": [], "new": [], "closed": [],
+                                                      "observed": []})
     for r in records:
         if r.get("recordType") != "job":
             continue
@@ -65,13 +69,15 @@ def compute_signals(records: list[dict], state: dict, surge_min: int = 5,
             (c["baseline"] if r.get("baseline") else c["new"]).append(r)
         elif change == "closed":
             c["closed"].append(r)
+        elif change in OBSERVED_TYPES:                  # existing posting seen again: history only, never a new role
+            c["observed"].append(r)
 
     signals: list[dict] = []
     for key in sorted(companies):
         c = companies[key]
         known = key in history
         seen = history.setdefault(key, {"departments": set(), "countries": set()})
-        for job in c["baseline"]:                       # seed only, never signal
+        for job in c["baseline"] + c["observed"]:       # seed only, never signal
             _remember(seen, job)
         if known:
             signals += _first_time(key, c, seen, "department", "new_department")
