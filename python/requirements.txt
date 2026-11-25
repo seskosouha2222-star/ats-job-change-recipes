@@ -1,0 +1,5 @@
+# Only needed to run the Actor from hiring_signals.py; the offline mode and feed_to_sqlite.py use the standard library.
+# The scripts work with apify-client 1.x, 2.x and 3.x (3.x returns a Run object instead of a dict).
+apify-client>=1.9
+# tests
+pytest==8.3.4

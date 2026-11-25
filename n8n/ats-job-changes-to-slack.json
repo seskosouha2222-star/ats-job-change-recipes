@@ -1,0 +1,167 @@
+{
+  "name": "ATS job changes to Slack (agitools/ats-jobs-delta)",
+  "nodes": [
+    {
+      "id": "788a2a05-2318-5a13-a113-6608890a8301",
+      "name": "Every morning",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2e3e6861-3cdd-5eeb-94ee-1d261e804e4b",
+      "name": "Run ATS Job Changes Feed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "notes": "Create a Header Auth credential: name Authorization, value 'Bearer <your Apify API token>'. Keep monitorId unchanged between runs: it is the memory that makes each run return only changes.",
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/agitools~ats-jobs-delta/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "maxTotalChargeUsd",
+              "value": "1"
+            },
+            {
+              "name": "clean",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"companies\": [\n    \"greenhouse:stripe\",\n    \"https://jobs.lever.co/palantir\",\n    \"https://jobs.ashbyhq.com/openai\"\n  ],\n  \"monitorId\": \"n8n-slack-alerts\",\n  \"mode\": \"changes\",\n  \"emitBaseline\": false,\n  \"titleKeywords\": [\n    \"engineer\",\n    \"data\"\n  ]\n}",
+        "options": {
+          "timeout": 300000
+        }
+      }
+    },
+    {
+      "id": "652afcec-6c73-58e1-aa58-380576279d0f",
+      "name": "New jobs only",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "e12402a1-7368-5f10-a690-f6a5c21b7a43",
+              "leftValue": "={{ $json.recordType }}",
+              "rightValue": "job",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "7c199e29-b521-5e68-b326-76505b57561d",
+              "leftValue": "={{ $json.changeType }}",
+              "rightValue": "new",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "91cd4094-efea-55cf-837f-7c67561f6eb9",
+      "name": "Post to Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        0
+      ],
+      "notes": "Replace the URL with your Slack incoming-webhook URL.",
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/REPLACE/WITH/YOUR_WEBHOOK",
+        "sendBody": true,
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=New role at {{ $json.companyName || $json.companySlug }}: {{ $json.title }} ({{ ($json.locations || []).join(', ') }}) {{ $json.url }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Every morning": {
+      "main": [
+        [
+          {
+            "node": "Run ATS Job Changes Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run ATS Job Changes Feed": {
+      "main": [
+        [
+          {
+            "node": "New jobs only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New jobs only": {
+      "main": [
+        [
+          {
+            "node": "Post to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

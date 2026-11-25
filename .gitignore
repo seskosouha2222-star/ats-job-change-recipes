@@ -1,0 +1,6 @@
+__pycache__/
+.pytest_cache/
+*.sqlite
+signals.csv
+signals_state.json
+.env
