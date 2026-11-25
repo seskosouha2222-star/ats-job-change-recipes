@@ -65,19 +65,19 @@ function itemsToRows(items, runDate) {
 function valueOr(v) { return v === null || v === undefined ? '' : v; }
 
 function runFeed() {
-  var token = PropertiesService.getScriptProperties().getProperty('APIFY_TOKEN');
-  if (!token) throw new Error('Add APIFY_TOKEN in Project Settings -> Script Properties.');
+  var apifyToken = PropertiesService.getScriptProperties().getProperty('APIFY_TOKEN');
+  if (!apifyToken) throw new Error('Add APIFY_TOKEN in Project Settings -> Script Properties.');
   var api = 'https://api.apify.com/v2';
   // Start the run, then wait in short steps: Apps Script requests time out after about a minute.
-  var run = apifyJson(token, 'post', api + '/acts/' + ACTOR + '/runs?waitForFinish=45&maxTotalChargeUsd=' +
+  var run = apifyJson(apifyToken, 'post', api + '/acts/' + ACTOR + '/runs?waitForFinish=45&maxTotalChargeUsd=' +
     encodeURIComponent(CONFIG.MAX_CHARGE_USD), CONFIG.input).data;
   var deadline = Date.now() + 5 * 60 * 1000;   // stay inside the 6-minute Apps Script limit
   while (['READY', 'RUNNING'].indexOf(run.status) >= 0) {
     if (Date.now() > deadline) throw new Error('Run ' + run.id + ' still running; it will finish on Apify. Re-run later.');
-    run = apifyJson(token, 'get', api + '/actor-runs/' + run.id + '?waitForFinish=45').data;
+    run = apifyJson(apifyToken, 'get', api + '/actor-runs/' + run.id + '?waitForFinish=45').data;
   }
   if (run.status !== 'SUCCEEDED') throw new Error('Run ' + run.id + ' ended with status ' + run.status);
-  var items = apifyJson(token, 'get', api + '/datasets/' + run.defaultDatasetId + '/items?clean=true&format=json');
+  var items = apifyJson(apifyToken, 'get', api + '/datasets/' + run.defaultDatasetId + '/items?clean=true&format=json');
   var rows = itemsToRows(items, new Date().toISOString().slice(0, 10));
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   Object.keys(SHEETS).forEach(function (name) {
@@ -88,8 +88,8 @@ function runFeed() {
   });
 }
 
-function apifyJson(token, method, url, body) {
-  var opts = { method: method, headers: { Authorization: 'Bearer ' + token }, muteHttpExceptions: true };
+function apifyJson(apifyToken, method, url, body) {
+  var opts = { method: method, headers: { Authorization: 'Bearer ' + apifyToken }, muteHttpExceptions: true };
   if (body) { opts.contentType = 'application/json'; opts.payload = JSON.stringify(body); }
   var res = UrlFetchApp.fetch(url, opts);
   var code = res.getResponseCode();

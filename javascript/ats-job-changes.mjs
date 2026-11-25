@@ -26,10 +26,10 @@ export function splitRecords(items) {
   return out;
 }
 
-export async function runFeed(companies, { token = process.env.APIFY_TOKEN, maxTotalChargeUsd = 1 } = {}) {
-  if (!token) throw new Error('Set APIFY_TOKEN (your Apify API token).');
+export async function runFeed(companies, { apifyToken = process.env.APIFY_TOKEN, maxTotalChargeUsd = 1 } = {}) {
+  if (!apifyToken) throw new Error('Set APIFY_TOKEN (your Apify API token).');
   const { ApifyClient } = await import('apify-client');
-  const client = new ApifyClient({ token });
+  const client = new ApifyClient({ token: apifyToken });
   const run = await client.actor(ACTOR).call(buildInput(companies), { maxTotalChargeUsd });
   const { items } = await client.dataset(run.defaultDatasetId).listItems({ clean: true });
   return items;
