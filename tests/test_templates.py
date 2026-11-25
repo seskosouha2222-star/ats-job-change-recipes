@@ -146,12 +146,24 @@ def test_n8n_structure(path):
 def test_make_blueprint_structure():
     bp = json.loads((ROOT / "make/ats-job-changes-to-slack.blueprint.json").read_text())
     flow = bp["flow"]
-    assert [m["id"] for m in flow] == [1, 2, 3]
+    assert [m["id"] for m in flow] == [1, 2, 3, 4]
     assert flow[0]["module"] == "http:ActionSendData" and "maxTotalChargeUsd=" in flow[0]["mapper"]["url"]
     assert flow[1]["module"] == "builtin:BasicFeeder" and flow[1]["mapper"]["array"] == "{{1.data}}"
     conds = flow[2]["filter"]["conditions"]
     assert {c[1]["b"] for c in conds} == {"new", "reopened"}
     assert flow[0]["mapper"]["headers"][0]["value"] == "Bearer YOUR_APIFY_TOKEN"
+
+
+def test_make_slack_body_is_json_encoded_by_make():
+    """Codex P2 on PR #1: job titles with quotes or line breaks must not be pasted raw into JSON source."""
+    flow = json.loads((ROOT / "make/ats-job-changes-to-slack.blueprint.json").read_text())["flow"]
+    assert flow[2]["module"] == "json:TransformToJSON"
+    body = flow[3]["mapper"]["data"]
+    assert body == '{"text": {{3.json}}}'
+    assert "{{2." not in body, "no raw record values inside the JSON body"
+    # What Make sends for a hostile title: the encoded string keeps the body valid JSON.
+    title = 'Engineer "AI" Platform \\ ops\nsecond line'
+    assert json.loads('{"text": %s}' % json.dumps(title))["text"] == title
 
 
 def test_mcp_configs_point_to_one_actor():

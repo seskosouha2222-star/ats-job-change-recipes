@@ -26,8 +26,11 @@ var CONFIG = {
     emitCompanySummaries: true,
     titleKeywords: []
   },
-  MAX_CHARGE_USD: '1'
+  MAX_CHARGE_USD: '1',
+  MAX_WAIT_MS: 5 * 60 * 1000   // stay inside the 6-minute Apps Script limit
 };
+
+var PENDING_KEY = 'PENDING_RUN_ID';
 
 var ACTOR = 'agitools~ats-jobs-delta';
 
@@ -65,18 +68,27 @@ function itemsToRows(items, runDate) {
 function valueOr(v) { return v === null || v === undefined ? '' : v; }
 
 function runFeed() {
-  var apifyToken = PropertiesService.getScriptProperties().getProperty('APIFY_TOKEN');
+  var props = PropertiesService.getScriptProperties();
+  var apifyToken = props.getProperty('APIFY_TOKEN');
   if (!apifyToken) throw new Error('Add APIFY_TOKEN in Project Settings -> Script Properties.');
   var api = 'https://api.apify.com/v2';
-  // Start the run, then wait in short steps: Apps Script requests time out after about a minute.
-  var run = apifyJson(apifyToken, 'post', api + '/acts/' + ACTOR + '/runs?waitForFinish=45&maxTotalChargeUsd=' +
-    encodeURIComponent(CONFIG.MAX_CHARGE_USD), CONFIG.input).data;
-  var deadline = Date.now() + 5 * 60 * 1000;   // stay inside the 6-minute Apps Script limit
+  // A run that outlasted the previous invocation keeps running on Apify and has already advanced the monitor's
+  // memory: its changes exist only in its own dataset. Finish that run before starting a new one.
+  var pending = props.getProperty(PENDING_KEY);
+  var run = pending
+    ? apifyJson(apifyToken, 'get', api + '/actor-runs/' + pending + '?waitForFinish=45').data
+    : apifyJson(apifyToken, 'post', api + '/acts/' + ACTOR + '/runs?waitForFinish=45&maxTotalChargeUsd=' +
+        encodeURIComponent(CONFIG.MAX_CHARGE_USD), CONFIG.input).data;
+  props.setProperty(PENDING_KEY, run.id);   // saved before waiting, so a timeout or crash can resume it
+  var deadline = Date.now() + CONFIG.MAX_WAIT_MS;
   while (['READY', 'RUNNING'].indexOf(run.status) >= 0) {
-    if (Date.now() > deadline) throw new Error('Run ' + run.id + ' still running; it will finish on Apify. Re-run later.');
+    if (Date.now() > deadline) throw new Error('Run ' + run.id + ' is still running; the next run of this script will collect it.');
     run = apifyJson(apifyToken, 'get', api + '/actor-runs/' + run.id + '?waitForFinish=45').data;
   }
-  if (run.status !== 'SUCCEEDED') throw new Error('Run ' + run.id + ' ended with status ' + run.status);
+  if (run.status !== 'SUCCEEDED') {
+    props.deleteProperty(PENDING_KEY);
+    throw new Error('Run ' + run.id + ' ended with status ' + run.status);
+  }
   var items = apifyJson(apifyToken, 'get', api + '/datasets/' + run.defaultDatasetId + '/items?clean=true&format=json');
   var rows = itemsToRows(items, new Date().toISOString().slice(0, 10));
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -86,6 +98,7 @@ function runFeed() {
     if (sh.getLastRow() === 0) sh.appendRow(SHEETS[name]);
     sh.getRange(sh.getLastRow() + 1, 1, rows[name].length, SHEETS[name].length).setValues(rows[name]);
   });
+  props.deleteProperty(PENDING_KEY);   // only after the rows are written
 }
 
 function apifyJson(apifyToken, method, url, body) {
@@ -97,4 +110,4 @@ function apifyJson(apifyToken, method, url, body) {
   return JSON.parse(res.getContentText());
 }
 
-if (typeof module !== 'undefined') module.exports = { itemsToRows: itemsToRows, SHEETS: SHEETS, CONFIG: CONFIG };
+if (typeof module !== 'undefined') module.exports = { itemsToRows: itemsToRows, runFeed: runFeed, SHEETS: SHEETS, CONFIG: CONFIG, PENDING_KEY: PENDING_KEY };

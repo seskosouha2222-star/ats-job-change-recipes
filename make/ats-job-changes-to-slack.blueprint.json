@@ -60,33 +60,13 @@
     },
     {
       "id": 3,
-      "module": "http:ActionSendData",
-      "version": 3,
+      "module": "json:TransformToJSON",
+      "version": 1,
       "parameters": {
-        "handleErrors": false,
-        "useNewZLibDeCompress": true
+        "space": ""
       },
       "mapper": {
-        "url": "https://hooks.slack.com/services/REPLACE/WITH/YOUR_WEBHOOK",
-        "serializeUrl": false,
-        "method": "post",
-        "headers": [],
-        "qs": [],
-        "bodyType": "raw",
-        "parseResponse": false,
-        "authUser": "",
-        "authPass": "",
-        "timeout": "",
-        "shareCookies": false,
-        "ca": "",
-        "rejectUnauthorized": true,
-        "followRedirect": true,
-        "useQuerystring": false,
-        "gzip": true,
-        "useMtls": false,
-        "contentType": "application/json",
-        "data": "{\"text\": \"{{if(2.changeType = \\\"reopened\\\"; \\\"Reopened\\\"; \\\"New\\\")}} role at {{ifempty(2.companyName; 2.companySlug)}}: {{2.title}} {{2.url}}\"}",
-        "followAllRedirects": false
+        "object": "{{if(2.changeType = \"reopened\"; \"Reopened\"; \"New\")}} role at {{ifempty(2.companyName; 2.companySlug)}}: {{2.title}} {{2.url}}"
       },
       "metadata": {
         "designer": {
@@ -122,6 +102,43 @@
             }
           ]
         ]
+      }
+    },
+    {
+      "id": 4,
+      "module": "http:ActionSendData",
+      "version": 3,
+      "parameters": {
+        "handleErrors": false,
+        "useNewZLibDeCompress": true
+      },
+      "mapper": {
+        "url": "https://hooks.slack.com/services/REPLACE/WITH/YOUR_WEBHOOK",
+        "serializeUrl": false,
+        "method": "post",
+        "headers": [],
+        "qs": [],
+        "bodyType": "raw",
+        "parseResponse": false,
+        "authUser": "",
+        "authPass": "",
+        "timeout": "",
+        "shareCookies": false,
+        "ca": "",
+        "rejectUnauthorized": true,
+        "followRedirect": true,
+        "useQuerystring": false,
+        "gzip": true,
+        "useMtls": false,
+        "contentType": "application/json",
+        "data": "{\"text\": {{3.json}}}",
+        "followAllRedirects": false
+      },
+      "metadata": {
+        "designer": {
+          "x": 900,
+          "y": 0
+        }
       }
     }
   ],

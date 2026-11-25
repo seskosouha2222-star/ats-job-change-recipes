@@ -12,6 +12,9 @@ starts the ATS Job Changes Feed with your Apify token, waits for it, and appends
 Each company board read is also charged once per run. On the first run for a company, `newJobs` equals all of
 its open roles (the starting point), even when `emitBaseline` is false. `MAX_CHARGE_USD` caps one run.
 
+A run that outlasts one invocation (about 5 minutes) is not lost: its ID is kept in the script's properties and the
+next invocation collects its rows before starting a new run.
+
 Setup: open the script and follow the four steps at the top (paste, add `APIFY_TOKEN` as a Script Property, edit
 `CONFIG`, add a time-driven trigger). The token stays in the script's properties, never in the sheet.
 

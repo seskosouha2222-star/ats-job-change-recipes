@@ -42,3 +42,36 @@ test('itemsToRows fills each sheet with rows as wide as its header', () => {
   assert.equal(acme[8], 'Sales (3)');
   assert.ok(rows.Signals.some((r) => r[4] === 'new_department'));
 });
+
+// Codex P2 on PR #1: a run that outlasts the Apps Script deadline must be collected by the next invocation.
+test('Apps Script resumes a run that outlasted the previous invocation', () => {
+  const gsPath = require.resolve('../google-sheets/ats-job-changes.gs');
+  delete require.cache[gsPath];
+  const props = new Map([['APIFY_TOKEN', 'test-placeholder']]);
+  const calls = [];
+  let runStatus = 'RUNNING';
+  const appended = [];
+  globalThis.PropertiesService = { getScriptProperties: () => ({
+    getProperty: (k) => props.get(k) ?? null, setProperty: (k, v) => props.set(k, v), deleteProperty: (k) => props.delete(k) }) };
+  globalThis.UrlFetchApp = { fetch: (url, opts) => {
+    calls.push(`${opts.method} ${url.replace('https://api.apify.com/v2', '')}`);
+    const body = url.includes('/datasets/')
+      ? [{ recordType: 'job', changeType: 'new', ats: 'lever', companySlug: 'acme', title: 'Data Engineer', jobId: 'j1' }]
+      : { data: { id: 'RUN1', status: runStatus, defaultDatasetId: 'DS1' } };
+    return { getResponseCode: () => 200, getContentText: () => JSON.stringify(body) };
+  } };
+  const sheet = { rows: 0, getLastRow() { return this.rows; }, appendRow() { this.rows += 1; },
+    getRange: () => ({ setValues: (v) => { appended.push(...v); sheet.rows += v.length; } }) };
+  globalThis.SpreadsheetApp = { getActiveSpreadsheet: () => ({ getSheetByName: () => sheet, insertSheet: () => sheet }) };
+  const gs = require(gsPath);
+  gs.CONFIG.MAX_WAIT_MS = -1;                       // the deadline has passed at the first check
+  assert.throws(() => gs.runFeed(), /still running; the next run of this script will collect it/);
+  assert.equal(props.get(gs.PENDING_KEY), 'RUN1');
+  assert.equal(calls.filter((c) => c.startsWith('post ')).length, 1);
+  runStatus = 'SUCCEEDED';
+  gs.runFeed();
+  assert.equal(calls.filter((c) => c.startsWith('post ')).length, 1, 'no second run was started');
+  assert.ok(calls.includes('get /actor-runs/RUN1?waitForFinish=45'));
+  assert.equal(appended.length, 1);
+  assert.equal(props.has(gs.PENDING_KEY), false, 'cleared after the rows were written');
+});

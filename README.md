@@ -54,6 +54,9 @@ python hiring_signals.py --companies greenhouse:stripe https://jobs.ashbyhq.com/
 - The first run for a company returns every open job as `new` with `baseline: true`. Set `emitBaseline: false` to
   start silently.
 - A `closed` record is only sent after a complete read of the board and the Actor's safety checks.
+- The n8n and Make templates call the Actor synchronously (up to 5 minutes). Keep watch lists small enough to finish
+  in that time; a run that outlasts the call keeps running on Apify, and its changes are only in that run's dataset.
+  The Apps Script tracker resumes such a run automatically.
 
 ## Cost control
 The Actor is pay per event (see its [pricing tab](https://apify.com/agitools/ats-jobs-delta/pricing)). Unchanged
