@@ -1,0 +1,10 @@
+{
+  "companies": ["{{Job board}}"],
+  "monitorId": "{{Monitor ID}}",
+  "mode": "changes",
+  "emitBaseline": false,
+  "includeDescription": false,
+  "emitCompanySummaries": true,
+  "includeClosed": true,
+  "maxCompanies": 1
+}

@@ -7,13 +7,30 @@ The recipes use [ATS Job Changes Feed](https://apify.com/agitools/ats-jobs-delta
 Apify Actor that reads the vendors' official public job-board APIs and returns only what changed since the last run.
 You run it in your own Apify account with your own token; nothing in this repository needs a secret.
 
-| Recipe | What it does | Folder |
+## Pick a recipe by what you need
+
+| You want | Recipe | Platform |
 |---|---|---|
-| Hiring signals | Company-level signals: first role in a new department or country, hiring surge, hiring slowdown. CSV and optional Slack post | [`python/hiring_signals.py`](python/hiring_signals.py) |
-| Open-jobs table (SQLite) | Applies the feed so a table always equals the open jobs that match your filters | [`python/feed_to_sqlite.py`](python/feed_to_sqlite.py) |
-| Open-jobs table (Postgres) | The same pattern in SQL, with `jsonb` staging | [`sql/postgres_upsert.sql`](sql/postgres_upsert.sql) |
-| n8n: new roles to Slack | Daily schedule → run the Actor → keep `new` jobs → Slack message | [`n8n/ats-job-changes-to-slack.json`](n8n/ats-job-changes-to-slack.json) |
-| Make, Zapier, Sheets, CRM | Step-by-step no-code setups | [`no-code/make-zapier-sheets.md`](no-code/make-zapier-sheets.md) |
+| Sales: which target accounts are hiring, and where | [Clay: new roles per account](clay/README.md#recipe-a-new-and-reopened-roles-per-account-sales-trigger) | Clay |
+| Sales and account intelligence: hiring signals (free beta) | [Clay: hiring signals per account](clay/README.md#recipe-b-hiring-signals-per-account-free-beta), [n8n → Google Sheets](n8n/hiring-signals-to-google-sheets.json), [Python CSV](python/hiring_signals.py) | Clay, n8n, Python |
+| Recruiters: alert on new or reopened roles at client companies | [n8n → Slack](n8n/ats-job-changes-to-slack.json), [Make → Slack](make/README.md) | n8n, Make |
+| Investors and analysts: weekly hiring per company | [n8n weekly digest → Slack](n8n/weekly-company-hiring-digest.json), [Google Sheets tracker](google-sheets/README.md) | n8n, Sheets |
+| Job boards: keep postings in sync, remove expired ones | [SQLite](python/feed_to_sqlite.py), [Postgres](sql/postgres_upsert.sql), [Zapier paths](no-code/make-zapier-sheets.md#remove-expired-postings-from-a-job-board-zapier) | Code, Zapier |
+| Department and location trends | [Google Sheets tracker](google-sheets/README.md) (Companies sheet), company records in any recipe | Sheets |
+| Ask an AI assistant | [MCP setup for Claude, Cursor, VS Code, ChatGPT](mcp/README.md) | MCP |
+| Your own code | [Python](python/), [Node.js](javascript/ats-job-changes.mjs) | Code |
+
+Every template uses **your own** Apify account and token, keeps its own memory (`monitorId`), caps the charge per run
+and skips job descriptions by default (smaller rows, no free text that may contain names or contact details).
+
+### What has been tested
+- **Offline, on every commit** (`tests/`, `python/`, `javascript/`): every template's Actor input is validated against
+  the Actor's input schema ([`schema/`](schema/), version 0.3.5), every output field a template reads exists in the
+  dataset schema, workflow structure is checked, and the repository is scanned for secrets.
+- **On Apify**: the Clay input format and the company-summary fields used by the digest and Sheets recipes were checked
+  with a real run of the Actor (2026-11-25).
+- **Not yet imported by us on the external platform**: the n8n workflows, the Make blueprint, the Apps Script and the
+  Clay enrichment. They use each platform's documented formats; open an issue if an import fails.
 
 ## Quick start (Python, offline first)
 ```bash
@@ -48,20 +65,29 @@ jobs are free in changes mode. Every recipe sets a spending cap per run (`maxTot
 
 ## Tests
 ```bash
-cd python && pip install pytest && python -m pytest -q
+pip install pytest
+python -m pytest -q tests          # templates against the Actor's schemas
+(cd python && python -m pytest -q) # Python recipes
+node --test javascript/test.mjs    # Node example and Apps Script mapping
 ```
 
 ## Security
 Never commit an API token or webhook URL. The scripts read `APIFY_TOKEN` and `SLACK_WEBHOOK_URL` from the
-environment; the n8n workflow expects a Header Auth credential that you create in your own n8n instance.
+environment; the n8n workflows expect a Header Auth credential that you create in your own n8n instance; the Apps
+Script reads the token from its Script Properties.
 
 ## Data and responsibility
-Job postings are published by employers. Every record links to the employer's original posting. You remain
+Job postings are published by employers. Every record links to the employer's original posting. Descriptions can
+contain recruiter names or contact details, which is why the templates leave them out; if you turn them on, treat
+them as personal data where privacy law applies. Public availability does not remove those obligations. You remain
 responsible for how you use the data, including the employers' and job boards' own terms.
+
+Hiring signals are a free, opt-in beta. They describe hiring activity on public job boards, with a confidence score;
+they do not prove purchase intent.
 
 ## License
 The recipes, scripts, SQL, workflow and documentation in this repository are released under the [MIT License](LICENSE).
 The license covers this repository only. The ATS Job Changes Feed Actor is a separate product, used under Apify's
 terms and its own pricing.
 
-Not affiliated with Greenhouse, Lever, Ashby or Apify. Built by AGI Tools Team.
+Not affiliated with Greenhouse, Lever, Ashby, Apify, Clay, n8n, Make, Zapier or Google. Built by AGI Tools Team.

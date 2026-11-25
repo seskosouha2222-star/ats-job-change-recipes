@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "ats-job-changes": {
+      "url": "https://mcp.apify.com?tools=agitools/ats-jobs-delta",
+      "headers": {
+        "Authorization": "Bearer ${env:APIFY_TOKEN}"
+      }
+    }
+  }
+}

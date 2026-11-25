@@ -1,0 +1,146 @@
+{
+  "name": "New roles at target companies to Slack (ATS Job Changes Feed)",
+  "flow": [
+    {
+      "id": 1,
+      "module": "http:ActionSendData",
+      "version": 3,
+      "parameters": {
+        "handleErrors": false,
+        "useNewZLibDeCompress": true
+      },
+      "mapper": {
+        "url": "https://api.apify.com/v2/acts/agitools~ats-jobs-delta/run-sync-get-dataset-items?clean=true&maxTotalChargeUsd=1",
+        "serializeUrl": false,
+        "method": "post",
+        "headers": [
+          {
+            "name": "Authorization",
+            "value": "Bearer YOUR_APIFY_TOKEN"
+          }
+        ],
+        "qs": [],
+        "bodyType": "raw",
+        "parseResponse": true,
+        "authUser": "",
+        "authPass": "",
+        "timeout": "300",
+        "shareCookies": false,
+        "ca": "",
+        "rejectUnauthorized": true,
+        "followRedirect": true,
+        "useQuerystring": false,
+        "gzip": true,
+        "useMtls": false,
+        "contentType": "application/json",
+        "data": "{\n  \"companies\": [\n    \"greenhouse:stripe\",\n    \"https://jobs.lever.co/palantir\",\n    \"https://jobs.ashbyhq.com/openai\"\n  ],\n  \"monitorId\": \"make-slack-alerts\",\n  \"mode\": \"changes\",\n  \"emitBaseline\": false,\n  \"includeDescription\": false,\n  \"emitCompanySummaries\": false,\n  \"titleKeywords\": [\n    \"engineer\",\n    \"data\"\n  ]\n}",
+        "followAllRedirects": false
+      },
+      "metadata": {
+        "designer": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": 2,
+      "module": "builtin:BasicFeeder",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "array": "{{1.data}}"
+      },
+      "metadata": {
+        "designer": {
+          "x": 300,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": 3,
+      "module": "http:ActionSendData",
+      "version": 3,
+      "parameters": {
+        "handleErrors": false,
+        "useNewZLibDeCompress": true
+      },
+      "mapper": {
+        "url": "https://hooks.slack.com/services/REPLACE/WITH/YOUR_WEBHOOK",
+        "serializeUrl": false,
+        "method": "post",
+        "headers": [],
+        "qs": [],
+        "bodyType": "raw",
+        "parseResponse": false,
+        "authUser": "",
+        "authPass": "",
+        "timeout": "",
+        "shareCookies": false,
+        "ca": "",
+        "rejectUnauthorized": true,
+        "followRedirect": true,
+        "useQuerystring": false,
+        "gzip": true,
+        "useMtls": false,
+        "contentType": "application/json",
+        "data": "{\"text\": \"{{if(2.changeType = \\\"reopened\\\"; \\\"Reopened\\\"; \\\"New\\\")}} role at {{ifempty(2.companyName; 2.companySlug)}}: {{2.title}} {{2.url}}\"}",
+        "followAllRedirects": false
+      },
+      "metadata": {
+        "designer": {
+          "x": 600,
+          "y": 0
+        }
+      },
+      "filter": {
+        "name": "New or reopened jobs",
+        "conditions": [
+          [
+            {
+              "a": "{{2.recordType}}",
+              "b": "job",
+              "o": "text:equal"
+            },
+            {
+              "a": "{{2.changeType}}",
+              "b": "new",
+              "o": "text:equal"
+            }
+          ],
+          [
+            {
+              "a": "{{2.recordType}}",
+              "b": "job",
+              "o": "text:equal"
+            },
+            {
+              "a": "{{2.changeType}}",
+              "b": "reopened",
+              "o": "text:equal"
+            }
+          ]
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "instant": false,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": true,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false,
+      "freshVariables": false
+    },
+    "designer": {
+      "orphans": []
+    }
+  }
+}

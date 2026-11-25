@@ -1,0 +1,268 @@
+{
+  "name": "Hiring signals (beta) to Google Sheets (ATS Job Changes Feed)",
+  "nodes": [
+    {
+      "id": "005ed093-74ee-54c3-a526-942ed379c48f",
+      "name": "Setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -120
+      ],
+      "parameters": {
+        "content": "## Hiring signals (free beta) \u2192 Google Sheets\n1. **Run ATS Job Changes Feed**: create a Header Auth credential (`Authorization` = `Bearer <your Apify token>`) and list your target accounts in `companies`.\n2. **Append to Google Sheets**: connect your own Google account, pick your spreadsheet and a sheet named `Signals` whose first row is the header from the repository's `google-sheets/signals_header.csv`.\n3. Activate. Signals need history: the first run only records each company; department and country signals can appear from the second run, rate signals after 3+ runs over 7+ days.\n\nSignals are a free, opt-in beta. They describe hiring activity on the public job board, with a confidence score; they are not proof of buying intent.",
+        "width": 440,
+        "height": 380
+      }
+    },
+    {
+      "id": "95fd8efa-34c4-5c01-84f7-c50d63096655",
+      "name": "Every Monday",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "7fa7428a-60ab-5609-bece-6724da075e78",
+      "name": "Run ATS Job Changes Feed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "notes": "Credential: Header Auth, name 'Authorization', value 'Bearer <your Apify API token>'. Keep monitorId unchanged between runs: it is the memory that makes each run return only changes. maxTotalChargeUsd caps what one run can cost.",
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/agitools~ats-jobs-delta/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "maxTotalChargeUsd",
+              "value": "2"
+            },
+            {
+              "name": "clean",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"companies\": [\n    \"greenhouse:stripe\",\n    \"https://jobs.ashbyhq.com/openai\"\n  ],\n  \"monitorId\": \"n8n-hiring-signals\",\n  \"mode\": \"changes\",\n  \"emitBaseline\": false,\n  \"emitSignals\": true,\n  \"includeDescription\": false,\n  \"emitCompanySummaries\": false,\n  \"includeClosed\": true\n}",
+        "options": {
+          "timeout": 300000
+        }
+      }
+    },
+    {
+      "id": "be5e63dd-d30c-59f9-9c37-954ef089221a",
+      "name": "Signals only",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "72e82dad-da5a-5dd4-899f-c3db5a80766a",
+              "leftValue": "={{ $json.recordType }}",
+              "rightValue": "signal",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "df63b4a7-45a5-5fe4-8450-96aa6ce8bca1",
+      "name": "Shape row",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6189491f-ee08-57f4-97ce-fdee9b77e1b3",
+              "name": "runDate",
+              "type": "string",
+              "value": "={{ $now.toISODate() }}"
+            },
+            {
+              "id": "105ee78c-2102-53e2-8da7-44829bc70871",
+              "name": "observedAt",
+              "type": "string",
+              "value": "={{ $json.observedAt }}"
+            },
+            {
+              "id": "99923123-aec7-52f8-8f93-02fbc5aecee6",
+              "name": "company",
+              "type": "string",
+              "value": "={{ $json.companyName || $json.companySlug }}"
+            },
+            {
+              "id": "6ab2f10d-2615-5a2f-882b-3cfb1bffdf45",
+              "name": "ats",
+              "type": "string",
+              "value": "={{ $json.ats }}"
+            },
+            {
+              "id": "cc83cc93-14c2-5178-9c7a-af80e19eaf95",
+              "name": "signalType",
+              "type": "string",
+              "value": "={{ $json.signalType }}"
+            },
+            {
+              "id": "726a3638-3574-5183-852f-f5c6feac6e19",
+              "name": "category",
+              "type": "string",
+              "value": "={{ $json.category }}"
+            },
+            {
+              "id": "3a547739-1b17-5faf-9189-3dd8bf484b93",
+              "name": "statement",
+              "type": "string",
+              "value": "={{ $json.statement }}"
+            },
+            {
+              "id": "b40b8346-a6fc-5aa0-8df6-92c83aa3c009",
+              "name": "confidence",
+              "type": "string",
+              "value": "={{ $json.confidence }}"
+            },
+            {
+              "id": "8b52f9e5-c010-51f0-b1b7-55350b772859",
+              "name": "monitoringSince",
+              "type": "string",
+              "value": "={{ $json.monitoringSince }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "da19d8f4-d4e0-578e-8c38-036f38eaa3ec",
+      "name": "Append to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        960,
+        0
+      ],
+      "notes": "Connect your own Google Sheets credential and select your spreadsheet.",
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Signals"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Every Monday": {
+      "main": [
+        [
+          {
+            "node": "Run ATS Job Changes Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run ATS Job Changes Feed": {
+      "main": [
+        [
+          {
+            "node": "Signals only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Signals only": {
+      "main": [
+        [
+          {
+            "node": "Shape row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shape row": {
+      "main": [
+        [
+          {
+            "node": "Append to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

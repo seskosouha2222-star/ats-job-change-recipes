@@ -1,0 +1,162 @@
+{
+  "title": "ATS Job Changes Feed input",
+  "description": "Watch a list of company job boards (Greenhouse, Lever, Ashby) through their official public APIs. Pass the same monitorId on every run (or run a saved Task): the Actor remembers what it already returned, so each run outputs only new, changed, reopened and closed jobs. Minimal call: {\"companies\": [\"greenhouse:stripe\"], \"monitorId\": \"my-list\"}. Charges are per company checked and per job record returned; set maxTotalChargeUsd on the run to cap spending. Optional free company hiring signals: emitSignals.",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "companies": {
+      "title": "Companies to track",
+      "type": "array",
+      "description": "One entry per company. Use 'ats:board' (greenhouse:stripe, lever:palantir, ashby:openai), a job-board URL (https://boards.greenhouse.io/stripe, https://jobs.lever.co/palantir, https://jobs.ashbyhq.com/openai) or a careers page URL; the Actor finds the ATS link on the page (respecting robots.txt).",
+      "editor": "stringList",
+      "prefill": [
+        "greenhouse:stripe",
+        "https://jobs.ashbyhq.com/openai"
+      ]
+    },
+    "mode": {
+      "title": "Output mode",
+      "type": "string",
+      "description": "'changes' returns only jobs that entered, changed in or left your filtered view (unchanged jobs are free and not returned). 'snapshot' also returns every unchanged open job that matches your filters (each is charged as a job record).",
+      "editor": "select",
+      "enum": [
+        "changes",
+        "snapshot"
+      ],
+      "enumTitles": [
+        "Only changes (recommended for schedules)",
+        "Full snapshot every run"
+      ],
+      "default": "changes"
+    },
+    "emitBaseline": {
+      "title": "Return all current jobs on the first run",
+      "type": "boolean",
+      "description": "On the first run for a company every open job is new. Turn off to start monitoring silently: the first run records the baseline (charged only per company) and later runs return changes.",
+      "default": true
+    },
+    "emitSignals": {
+      "title": "Company hiring signals (beta, free)",
+      "type": "boolean",
+      "description": "Adds free 'signal' records per company: first role in a new department or country, first roles naming a technology, hiring acceleration or slowdown against the company's own baseline, leadership hiring, seniority mix shifts, and a hiring trend summary. Signals cover the whole board (not your title/location filters), need history (the first run only records it; rate signals need 3+ runs over 7+ days) and say whether each item is an observed fact or an inferred signal, with a confidence score.",
+      "default": false
+    },
+    "includeDescription": {
+      "title": "Include job descriptions",
+      "type": "boolean",
+      "description": "Plain-text job description, as published on the job board.",
+      "default": true
+    },
+    "maxDescriptionChars": {
+      "title": "Max description length (characters)",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 50000,
+      "default": 8000,
+      "unit": "characters",
+      "description": "Longer descriptions are cut to this many characters and flagged with descriptionTruncated=true. Change detection always uses the full text."
+    },
+    "includeClosed": {
+      "title": "Report closed jobs",
+      "type": "boolean",
+      "description": "Return a 'closed' record when a job disappears from a company's board.",
+      "default": true
+    },
+    "emitCompanySummaries": {
+      "title": "Add a hiring summary per company",
+      "type": "boolean",
+      "description": "One free 'company' record per company and run: open jobs, new/changed/closed counts, top departments and locations, remote share, salary disclosure.",
+      "default": true
+    },
+    "titleKeywords": {
+      "title": "Only jobs whose title contains (any of)",
+      "type": "array",
+      "description": "Case-insensitive. Defines your view: you receive (and pay for) only matching jobs, and closures only for jobs you received. Changing filters later emits 'new' / 'unmatched' records for jobs entering or leaving the view.",
+      "editor": "stringList"
+    },
+    "locationKeywords": {
+      "title": "Only jobs whose location contains (any of)",
+      "type": "array",
+      "description": "Case-insensitive match on location, country and workplace type (e.g. 'remote', 'berlin', 'US').",
+      "editor": "stringList"
+    },
+    "greenhouseSalary": {
+      "title": "Greenhouse salary ranges",
+      "type": "boolean",
+      "default": true,
+      "editor": "checkbox",
+      "description": "Greenhouse lists jobs without pay. When on, the Actor makes one extra request per returned Greenhouse job to read the pay ranges the employer publishes (cached; repeated only when the job is updated). Salary is never estimated."
+    },
+    "maxSalaryRequests": {
+      "title": "Max Greenhouse salary lookups per run",
+      "type": "integer",
+      "default": 200,
+      "minimum": 0,
+      "maximum": 2000,
+      "editor": "number",
+      "description": "Caps the extra Greenhouse requests per run (about 4 per second, so 200 lookups add up to about a minute). Jobs beyond the cap are returned with salaryStatus 'not_fetched'; in changes mode they are looked up again only when the job changes."
+    },
+    "probeAtsByDomain": {
+      "title": "Guess the ATS from the company domain",
+      "type": "boolean",
+      "description": "If no ATS link is found on a careers page, try the domain name (example.com -> 'example') as a board name on each ATS. Results are marked detectedVia='probe'; check they are the right company.",
+      "default": false
+    },
+    "monitorId": {
+      "title": "Monitor ID",
+      "type": "string",
+      "editor": "textfield",
+      "description": "Name of this watch list, e.g. 'sales-targets-eu'. Each monitor keeps its own memory of what it has already reported, so two monitors never consume each other's changes. Leave empty when you run the Actor from a saved Task (the Task gets its own memory automatically). One-off API runs without a monitor ID share one default memory. Prefer lower-case letters, digits and hyphens; ids that differ only in case or '_' vs '-' are kept apart."
+    },
+    "stateStoreName": {
+      "title": "State store name (advanced)",
+      "type": "string",
+      "description": "Advanced: an explicit key-value store name. Use the same name in two monitors only if you deliberately want them to share one change history (their runs are then serialized by a lock). Overrides Monitor ID.",
+      "editor": "textfield"
+    },
+    "maxCompanies": {
+      "title": "Max companies per run",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000,
+      "default": 100,
+      "description": "Safety cap on how many companies one run processes. Extra entries are skipped with a warning."
+    },
+    "maxJobsPerCompany": {
+      "title": "Max jobs per company",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10000,
+      "default": 5000,
+      "description": "Boards larger than this are read partially and then never produce 'closed' records (cannot be verified)."
+    },
+    "closedConfirmRuns": {
+      "title": "Runs a job must be missing before it is reported closed",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "default": 1,
+      "description": "A job must be missing from a complete board read this many consecutive runs before a 'closed' record is emitted. Raise it if a board flickers."
+    },
+    "requestTimeoutSecs": {
+      "title": "Request timeout",
+      "type": "integer",
+      "minimum": 5,
+      "maximum": 120,
+      "default": 30,
+      "unit": "seconds",
+      "description": "Timeout for each HTTP request to an ATS API."
+    },
+    "maxRetries": {
+      "title": "Retries per request",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5,
+      "default": 2,
+      "description": "Retries for timeouts, HTTP 408/425/429 and 5xx, with backoff and Retry-After support."
+    }
+  },
+  "required": [
+    "companies"
+  ]
+}
