@@ -1,8 +1,23 @@
 {
-  "name": "ATS job changes to Slack (agitools/ats-jobs-delta)",
+  "name": "New roles at target companies to Slack (ATS Job Changes Feed)",
   "nodes": [
     {
-      "id": "788a2a05-2318-5a13-a113-6608890a8301",
+      "id": "fb525746-620f-5f76-a977-8666f09c44bd",
+      "name": "Setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -120
+      ],
+      "parameters": {
+        "content": "## New roles at your target companies \u2192 Slack\n1. **Run ATS Job Changes Feed**: create a Header Auth credential (`Authorization` = `Bearer <your Apify token>`), then edit `companies` (`greenhouse:<board>`, a Greenhouse/Lever/Ashby job-board URL, or a careers-page URL) and the optional `titleKeywords` / `locationKeywords`.\n2. **Post to Slack**: paste your Slack incoming-webhook URL.\n3. Activate. The first run is silent (`emitBaseline: false`); later runs return only roles that are new or reopened since the previous run.\n\nCost: pay per event on Apify, capped per run by `maxTotalChargeUsd`. Unchanged jobs are free.",
+        "width": 440,
+        "height": 360
+      }
+    },
+    {
+      "id": "869d49ac-98da-58fe-939b-045ee4eee20f",
       "name": "Every morning",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -22,7 +37,7 @@
       }
     },
     {
-      "id": "2e3e6861-3cdd-5eeb-94ee-1d261e804e4b",
+      "id": "3a587945-4822-5cfb-8605-c561608bece3",
       "name": "Run ATS Job Changes Feed",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -30,7 +45,7 @@
         240,
         0
       ],
-      "notes": "Create a Header Auth credential: name Authorization, value 'Bearer <your Apify API token>'. Keep monitorId unchanged between runs: it is the memory that makes each run return only changes.",
+      "notes": "Credential: Header Auth, name 'Authorization', value 'Bearer <your Apify API token>'. Keep monitorId unchanged between runs: it is the memory that makes each run return only changes. maxTotalChargeUsd caps what one run can cost.",
       "parameters": {
         "method": "POST",
         "url": "https://api.apify.com/v2/acts/agitools~ats-jobs-delta/run-sync-get-dataset-items",
@@ -51,15 +66,15 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "{\n  \"companies\": [\n    \"greenhouse:stripe\",\n    \"https://jobs.lever.co/palantir\",\n    \"https://jobs.ashbyhq.com/openai\"\n  ],\n  \"monitorId\": \"n8n-slack-alerts\",\n  \"mode\": \"changes\",\n  \"emitBaseline\": false,\n  \"titleKeywords\": [\n    \"engineer\",\n    \"data\"\n  ]\n}",
+        "jsonBody": "{\n  \"companies\": [\n    \"greenhouse:stripe\",\n    \"https://jobs.lever.co/palantir\",\n    \"https://jobs.ashbyhq.com/openai\"\n  ],\n  \"monitorId\": \"n8n-slack-alerts\",\n  \"mode\": \"changes\",\n  \"emitBaseline\": false,\n  \"includeDescription\": false,\n  \"emitCompanySummaries\": false,\n  \"titleKeywords\": [\n    \"engineer\",\n    \"data\"\n  ]\n}",
         "options": {
           "timeout": 300000
         }
       }
     },
     {
-      "id": "652afcec-6c73-58e1-aa58-380576279d0f",
-      "name": "New jobs only",
+      "id": "2ebf41bd-5af8-5dcb-b863-29fdc17bd08f",
+      "name": "Jobs only",
       "type": "n8n-nodes-base.filter",
       "typeVersion": 2,
       "position": [
@@ -75,18 +90,9 @@
           },
           "conditions": [
             {
-              "id": "e12402a1-7368-5f10-a690-f6a5c21b7a43",
+              "id": "168238cc-c987-5235-b3c3-7d08193e6a3c",
               "leftValue": "={{ $json.recordType }}",
               "rightValue": "job",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            },
-            {
-              "id": "7c199e29-b521-5e68-b326-76505b57561d",
-              "leftValue": "={{ $json.changeType }}",
-              "rightValue": "new",
               "operator": {
                 "type": "string",
                 "operation": "equals"
@@ -99,15 +105,56 @@
       }
     },
     {
-      "id": "91cd4094-efea-55cf-837f-7c67561f6eb9",
-      "name": "Post to Slack",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "id": "1dfd3aec-6f53-513d-acc3-bd3de4223d4b",
+      "name": "New or reopened",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
       "position": [
         720,
         0
       ],
-      "notes": "Replace the URL with your Slack incoming-webhook URL.",
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "6a6dbd97-ba22-5e34-b0f4-cbcddf57780c",
+              "leftValue": "={{ $json.changeType }}",
+              "rightValue": "new",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "30daa7e5-981a-5ab9-92eb-05c65fc5132b",
+              "leftValue": "={{ $json.changeType }}",
+              "rightValue": "reopened",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "bca93e42-aa4a-5330-b71c-819dc6015d45",
+      "name": "Post to Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        0
+      ],
+      "notes": "Replace the URL with your own Slack incoming-webhook URL.",
       "parameters": {
         "method": "POST",
         "url": "https://hooks.slack.com/services/REPLACE/WITH/YOUR_WEBHOOK",
@@ -117,7 +164,7 @@
           "parameters": [
             {
               "name": "text",
-              "value": "=New role at {{ $json.companyName || $json.companySlug }}: {{ $json.title }} ({{ ($json.locations || []).join(', ') }}) {{ $json.url }}"
+              "value": "={{ $json.changeType === 'reopened' ? 'Reopened' : 'New' }} role at {{ $json.companyName || $json.companySlug }}: {{ $json.title }} ({{ ($json.locations || []).join(', ') }}) {{ $json.url }}"
             }
           ]
         },
@@ -141,14 +188,25 @@
       "main": [
         [
           {
-            "node": "New jobs only",
+            "node": "Jobs only",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "New jobs only": {
+    "Jobs only": {
+      "main": [
+        [
+          {
+            "node": "New or reopened",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New or reopened": {
       "main": [
         [
           {
@@ -163,5 +221,8 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "pinData": {}
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
 }

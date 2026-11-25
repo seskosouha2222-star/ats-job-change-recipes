@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "ats-job-changes": {
+      "type": "http",
+      "url": "https://mcp.apify.com?tools=agitools/ats-jobs-delta"
+    }
+  }
+}

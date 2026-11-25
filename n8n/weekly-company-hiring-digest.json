@@ -1,0 +1,162 @@
+{
+  "name": "Weekly company hiring digest to Slack (ATS Job Changes Feed)",
+  "nodes": [
+    {
+      "id": "607f0841-ef68-5aaf-b001-180ad4407082",
+      "name": "Setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -120
+      ],
+      "parameters": {
+        "content": "## Weekly hiring digest per company \u2192 Slack\nFor investors, analysts and account teams: one message a week with open roles and new/closed roles per company, from the Actor's free `company` summary records.\n1. **Run ATS Job Changes Feed**: Header Auth credential (`Authorization` = `Bearer <your Apify token>`), edit `companies`.\n2. **Post to Slack**: your incoming-webhook URL.\n\nEach run is charged per company board read and per changed job delivered; unchanged jobs are free.",
+        "width": 440,
+        "height": 320
+      }
+    },
+    {
+      "id": "d32026f9-a469-5f5f-9c5a-ba8ad32c60c4",
+      "name": "Every Monday",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2be97c4d-be6d-53e1-9b01-0e64192888b6",
+      "name": "Run ATS Job Changes Feed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "notes": "Credential: Header Auth, name 'Authorization', value 'Bearer <your Apify API token>'. Keep monitorId unchanged between runs: it is the memory that makes each run return only changes. maxTotalChargeUsd caps what one run can cost.",
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/agitools~ats-jobs-delta/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "maxTotalChargeUsd",
+              "value": "2"
+            },
+            {
+              "name": "clean",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"companies\": [\n    \"greenhouse:stripe\",\n    \"https://jobs.lever.co/palantir\",\n    \"https://jobs.ashbyhq.com/openai\"\n  ],\n  \"monitorId\": \"n8n-weekly-digest\",\n  \"mode\": \"changes\",\n  \"emitBaseline\": false,\n  \"includeDescription\": false,\n  \"emitCompanySummaries\": true\n}",
+        "options": {
+          "timeout": 300000
+        }
+      }
+    },
+    {
+      "id": "d1263e17-2e42-5c98-bc4a-bb8e10becc5f",
+      "name": "Build digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// One Slack message summarising this week's hiring per company (free 'company' records).\nconst rows = $input.all().map(i => i.json).filter(r => r.recordType === 'company' && r.status === 'ok');\nrows.sort((a, b) => (b.newJobs || 0) - (a.newJobs || 0));\nconst lines = rows.map(r => {\n  const name = r.companyName || r.companySlug;\n  const top = (r.topDepartments || []).slice(0, 3).map(d => d.name || d).join(', ');\n  // First run for a company: every open role counts as new (baseline), so report it as a starting point.\n  const baseline = r.openJobs > 0 && r.newJobs === r.openJobs && !r.changedJobs && !r.closedJobs;\n  const counts = baseline ? `${r.openJobs} open (first week monitored)` :\n    `${r.openJobs} open, +${r.newJobs || 0} new, ${r.closedJobs || 0} closed`;\n  return `\u2022 ${name}: ${counts}` + (top ? ` (top: ${top})` : '');\n});\nconst failed = $input.all().map(i => i.json).filter(r => r.recordType === 'company' && r.status !== 'ok');\nif (failed.length) lines.push(`Not read this week: ${failed.map(r => r.companySlug).join(', ')}`);\nreturn [{ json: { text: lines.length ? `Weekly hiring digest\\n${lines.join('\\n')}` : 'Weekly hiring digest: no data' } }];\n"
+      }
+    },
+    {
+      "id": "51404354-3956-5767-876f-44eb38fce849",
+      "name": "Post to Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        0
+      ],
+      "notes": "Replace the URL with your own Slack incoming-webhook URL.",
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/REPLACE/WITH/YOUR_WEBHOOK",
+        "sendBody": true,
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Every Monday": {
+      "main": [
+        [
+          {
+            "node": "Run ATS Job Changes Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run ATS Job Changes Feed": {
+      "main": [
+        [
+          {
+            "node": "Build digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build digest": {
+      "main": [
+        [
+          {
+            "node": "Post to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

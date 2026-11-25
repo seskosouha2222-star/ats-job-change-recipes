@@ -1,5 +1,8 @@
 # No-code recipes: Make, Zapier, Google Sheets, Slack
 
+Importable files: [Make blueprint](../make/README.md), [n8n workflows](../n8n/), [Clay inputs](../clay/README.md),
+[Apps Script for Sheets](../google-sheets/README.md). The steps below use Apify's own Make and Zapier apps.
+
 All recipes start the same way, in the Apify Console:
 
 1. Open **ATS Job Changes Feed** (`agitools/ats-jobs-delta`) and click **Save as a new task**.

@@ -1,0 +1,566 @@
+{
+  "actorSpecification": 1,
+  "fields": {
+    "type": "object",
+    "properties": {
+      "recordType": {
+        "type": "string",
+        "enum": [
+          "job",
+          "company",
+          "signal"
+        ]
+      },
+      "changeType": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "new",
+          "changed",
+          "reopened",
+          "closed",
+          "unchanged",
+          "unmatched",
+          null
+        ]
+      },
+      "ats": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "companySlug": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "companyName": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "jobId": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "title": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "department": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "team": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "locations": {
+        "type": [
+          "array",
+          "null"
+        ]
+      },
+      "country": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "workplaceType": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "employmentType": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "salary": {
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "url": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "applyUrl": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "publishedAt": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "description": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "changedFields": {
+        "type": [
+          "array",
+          "null"
+        ]
+      },
+      "firstSeenAt": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "closedAt": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "openJobs": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "status": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "ok",
+          "error",
+          "incomplete",
+          null
+        ]
+      },
+      "errorCode": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "error": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "input": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "viewReason": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "content_changed",
+          "filter_changed",
+          null
+        ]
+      },
+      "filtersChanged": {
+        "type": [
+          "boolean",
+          "null"
+        ]
+      },
+      "salaryStatus": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "published",
+          "not_published",
+          "not_fetched",
+          "error",
+          null
+        ],
+        "description": "Whether the employer publishes pay for this job: published, not_published, not_fetched (Greenhouse lookup budget reached) or error"
+      },
+      "salaryRanges": {
+        "type": [
+          "array",
+          "null"
+        ],
+        "description": "All pay ranges the employer publishes (Greenhouse can list several zones); salary is the first"
+      },
+      "capped": {
+        "type": [
+          "boolean",
+          "null"
+        ],
+        "description": "Company record: the read stopped at maxJobsPerCompany, so nothing was closed"
+      },
+      "signalType": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "new_department",
+          "geographic_expansion",
+          "technology_investment",
+          "hiring_acceleration",
+          "hiring_slowdown",
+          "leadership_hiring",
+          "seniority_mix_shift",
+          "hiring_trend",
+          null
+        ],
+        "description": "Signal record: kind of signal"
+      },
+      "category": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "observed_fact",
+          "inferred_signal",
+          "observed_metrics",
+          null
+        ],
+        "description": "Signal record: observed fact, inferred signal (statistical test) or metrics"
+      },
+      "statement": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "Signal record: what was observed"
+      },
+      "interpretation": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "Signal record: possible business meaning (inferred, not a fact)"
+      },
+      "confidence": {
+        "type": [
+          "number",
+          "null"
+        ],
+        "description": "Signal record: 0-1 confidence; see confidenceBasis"
+      },
+      "confidenceBasis": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "evidence": {
+        "type": [
+          "array",
+          "null"
+        ],
+        "description": "Signal record: up to 5 example jobs"
+      },
+      "metrics": {
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "monitoringSince": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "observedAt": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "signalsVersion": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      }
+    },
+    "required": [
+      "recordType"
+    ]
+  },
+  "views": {
+    "jobs": {
+      "title": "Job changes",
+      "transformation": {
+        "fields": [
+          "changeType",
+          "viewReason",
+          "companyName",
+          "title",
+          "department",
+          "locations",
+          "workplaceType",
+          "salary",
+          "salaryStatus",
+          "url",
+          "changedFields",
+          "publishedAt",
+          "firstSeenAt",
+          "closedAt",
+          "ats",
+          "jobId"
+        ]
+      },
+      "display": {
+        "component": "table",
+        "properties": {
+          "changeType": {
+            "label": "Change",
+            "format": "text"
+          },
+          "companyName": {
+            "label": "Company",
+            "format": "text"
+          },
+          "title": {
+            "label": "Title",
+            "format": "text"
+          },
+          "department": {
+            "label": "Department",
+            "format": "text"
+          },
+          "locations": {
+            "label": "Locations",
+            "format": "array"
+          },
+          "workplaceType": {
+            "label": "Workplace",
+            "format": "text"
+          },
+          "salary": {
+            "label": "Salary",
+            "format": "object"
+          },
+          "url": {
+            "label": "Job URL",
+            "format": "link"
+          },
+          "changedFields": {
+            "label": "Changed fields",
+            "format": "array"
+          },
+          "publishedAt": {
+            "label": "Published",
+            "format": "date"
+          },
+          "firstSeenAt": {
+            "label": "First seen",
+            "format": "date"
+          },
+          "closedAt": {
+            "label": "Closed",
+            "format": "date"
+          },
+          "ats": {
+            "label": "ATS",
+            "format": "text"
+          },
+          "jobId": {
+            "label": "Job ID",
+            "format": "text"
+          },
+          "viewReason": {
+            "label": "Why (view)",
+            "format": "text"
+          },
+          "salaryStatus": {
+            "label": "Salary status",
+            "format": "text"
+          }
+        }
+      }
+    },
+    "companies": {
+      "title": "Hiring summary per company",
+      "transformation": {
+        "fields": [
+          "status",
+          "companyName",
+          "ats",
+          "companySlug",
+          "openJobs",
+          "newJobs",
+          "changedJobs",
+          "closedJobs",
+          "remoteShare",
+          "salaryDisclosedShare",
+          "medianYearlySalaryUsd",
+          "topDepartments",
+          "errorCode"
+        ]
+      },
+      "display": {
+        "component": "table",
+        "properties": {
+          "status": {
+            "label": "Status",
+            "format": "text"
+          },
+          "companyName": {
+            "label": "Company",
+            "format": "text"
+          },
+          "ats": {
+            "label": "ATS",
+            "format": "text"
+          },
+          "companySlug": {
+            "label": "Board",
+            "format": "text"
+          },
+          "openJobs": {
+            "label": "Open jobs",
+            "format": "number"
+          },
+          "newJobs": {
+            "label": "New",
+            "format": "number"
+          },
+          "changedJobs": {
+            "label": "Changed",
+            "format": "number"
+          },
+          "closedJobs": {
+            "label": "Closed",
+            "format": "number"
+          },
+          "remoteShare": {
+            "label": "Remote share",
+            "format": "number"
+          },
+          "salaryDisclosedShare": {
+            "label": "Salary disclosed",
+            "format": "number"
+          },
+          "medianYearlySalaryUsd": {
+            "label": "Median salary (USD/yr)",
+            "format": "number"
+          },
+          "topDepartments": {
+            "label": "Top departments",
+            "format": "array"
+          },
+          "errorCode": {
+            "label": "Error",
+            "format": "text"
+          }
+        }
+      }
+    },
+    "signals": {
+      "title": "Company hiring signals (beta)",
+      "transformation": {
+        "fields": [
+          "signalType",
+          "category",
+          "companyName",
+          "companySlug",
+          "statement",
+          "interpretation",
+          "confidence",
+          "observedAt",
+          "evidence",
+          "metrics",
+          "confidenceBasis",
+          "monitoringSince",
+          "ats"
+        ]
+      },
+      "display": {
+        "component": "table",
+        "properties": {
+          "signalType": {
+            "label": "Signal",
+            "format": "text"
+          },
+          "category": {
+            "label": "Type",
+            "format": "text"
+          },
+          "companyName": {
+            "label": "Company",
+            "format": "text"
+          },
+          "companySlug": {
+            "label": "Board",
+            "format": "text"
+          },
+          "statement": {
+            "label": "Observed",
+            "format": "text"
+          },
+          "interpretation": {
+            "label": "Possible meaning",
+            "format": "text"
+          },
+          "confidence": {
+            "label": "Confidence",
+            "format": "number"
+          },
+          "observedAt": {
+            "label": "Observed at",
+            "format": "date"
+          },
+          "evidence": {
+            "label": "Example jobs",
+            "format": "array"
+          },
+          "metrics": {
+            "label": "Metrics",
+            "format": "object"
+          },
+          "confidenceBasis": {
+            "label": "Confidence basis",
+            "format": "text"
+          },
+          "monitoringSince": {
+            "label": "Monitoring since",
+            "format": "date"
+          },
+          "ats": {
+            "label": "ATS",
+            "format": "text"
+          }
+        }
+      }
+    }
+  }
+}
