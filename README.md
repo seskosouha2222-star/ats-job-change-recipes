@@ -12,6 +12,7 @@ You run it in your own Apify account with your own token; nothing in this reposi
 | You want | Recipe | Platform |
 |---|---|---|
 | Sales: which target accounts are hiring, and where | [Clay: new roles per account](clay/README.md#recipe-a-new-and-reopened-roles-per-account-sales-trigger) | Clay |
+| Sales and account intelligence: one workflow for history, account snapshots, signals and a daily Slack digest | [n8n account hiring intelligence](n8n/account-hiring-intelligence.json) (run in n8n; Google Sheets and Slack not yet tested, see below) | n8n, Sheets, Slack |
 | Sales and account intelligence: hiring signals (free beta) | [Clay: hiring signals per account](clay/README.md#recipe-b-hiring-signals-per-account-free-beta), [n8n → Google Sheets](n8n/hiring-signals-to-google-sheets.json), [Python CSV](python/hiring_signals.py) | Clay, n8n, Python |
 | Recruiters: alert on new or reopened roles at client companies | [n8n → Slack](n8n/ats-job-changes-to-slack.json), [Make → Slack](make/README.md) | n8n, Make |
 | Investors and analysts: weekly hiring per company | [n8n weekly digest → Slack](n8n/weekly-company-hiring-digest.json), [Google Sheets tracker](google-sheets/README.md) | n8n, Sheets |
@@ -39,6 +40,14 @@ and skips job descriptions by default (smaller rows, no free text that may conta
   - **n8n**: the three workflows import into n8n 2.49 (self-hosted). **New roles → Slack** run end to end with a
     Header Auth credential (`Authorization: Bearer <token>`): the alerts arrived in a Slack channel, and a second run
     posted nothing. The Google Sheets and weekly-digest workflows have not been run end to end yet.
+  - **n8n account hiring intelligence** (new, 2026-11-26): every expression and Code node is evaluated offline on
+    records shaped like the Actor's output (`tests/test_account_intelligence.py`), and its exact Actor input was run on
+    Apify (first run: 3 company records, no digest, as designed). It was then run in n8n 2.49 (self-hosted) against
+    the live Actor, with the Slack URL pointed at a local test endpoint and the Google Sheets nodes switched off:
+    the next run routed 3 new Stripe roles, 3 account snapshots and 3 signals (none matched the alert types, so none
+    were alerted) and posted one grouped digest; a same-day rerun found no new roles and posted nothing; a run with a
+    wrong Actor name went to the failure alert only. **Google Sheets writes and a real Slack channel are not tested
+    yet.**
   - The Apps Script has not been run in Google Sheets yet.
 
 ## Quick start (Python, offline first)
