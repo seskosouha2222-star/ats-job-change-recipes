@@ -33,9 +33,10 @@ and skips job descriptions by default (smaller rows, no free text that may conta
   - **Clay**: Recipe A run on Clay's **Run Apify actor** enrichment for two accounts (a `greenhouse:` board and an
     Ashby URL), with the Monitor ID formula from the Clay guide.
   - **Make**: the blueprint imports into make.com with all modules recognized (Apify app, JSON, HTTP v4) and the Actor,
-    input and $1 cap restored; the Apify step was run from Make.
-  - **n8n**: the three workflows import into n8n 2.49 (self-hosted).
-  - Not yet run end to end into Slack or Google Sheets by us; the Apps Script has not been run in Google Sheets yet.
+    input and $1 cap restored. Run end to end into Slack: the alerts arrived in a Slack channel, and a second run
+    posted nothing (no repeats). Also published as a Make template (submitted for Make's public library).
+  - **n8n**: the three workflows import into n8n 2.49 (self-hosted); end-to-end runs are pending.
+  - The Apps Script has not been run in Google Sheets yet.
 
 ## Quick start (Python, offline first)
 ```bash

@@ -31,6 +31,11 @@ Good to know
 Prefer Make's Slack or Google Sheets modules? Replace module 4; see
 [`../no-code/make-zapier-sheets.md`](../no-code/make-zapier-sheets.md).
 
-Status: see "What has been tested" in the [main README](../README.md#what-has-been-tested).
+Also available as a Make template:
+[New roles at target companies to Slack](https://www.make.com/en/integration/25728-new-roles-at-target-companies-to-slack-ats-job-changes-feed?templatePublicId=25728)
+(open it in Make and follow the setup wizard).
+
+Status: tested on make.com on 2026-11-26 (import, a run into a Slack channel, and a repeat run that posted nothing).
+See "What has been tested" in the [main README](../README.md#what-has-been-tested).
 
 Not affiliated with Make or Apify. Built by AGI Tools Team.
