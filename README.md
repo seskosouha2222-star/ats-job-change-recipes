@@ -35,7 +35,9 @@ and skips job descriptions by default (smaller rows, no free text that may conta
   - **Make**: the blueprint imports into make.com with all modules recognized (Apify app, JSON, HTTP v4) and the Actor,
     input and $1 cap restored. Run end to end into Slack: the alerts arrived in a Slack channel, and a second run
     posted nothing (no repeats). Also published as a Make template (submitted for Make's public library).
-  - **n8n**: the three workflows import into n8n 2.49 (self-hosted); end-to-end runs are pending.
+  - **n8n**: the three workflows import into n8n 2.49 (self-hosted). **New roles → Slack** run end to end with a
+    Header Auth credential (`Authorization: Bearer <token>`): the alerts arrived in a Slack channel, and a second run
+    posted nothing. The Google Sheets and weekly-digest workflows have not been run end to end yet.
   - The Apps Script has not been run in Google Sheets yet.
 
 ## Quick start (Python, offline first)
