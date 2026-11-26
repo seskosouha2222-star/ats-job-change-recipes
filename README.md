@@ -19,7 +19,7 @@ You run it in your own Apify account with your own token; nothing in this reposi
 | Department and location trends | [Google Sheets tracker](google-sheets/README.md) (Companies sheet), company records in any recipe | Sheets |
 | Ask an AI assistant | [MCP setup for Claude, Cursor, VS Code, ChatGPT](mcp/README.md) | MCP |
 | Your own code | [Python](python/), [Node.js](javascript/ats-job-changes.mjs) | Code |
-| Learn the pattern: diff one Greenhouse board yourself, no Actor, standard library only | [greenhouse_snapshot_diff.py](python/greenhouse_snapshot_diff.py) (15 offline tests) | Code |
+| Learn the pattern: diff one Greenhouse board yourself, no Actor, standard library only | [greenhouse_snapshot_diff.py](python/greenhouse_snapshot_diff.py) (15 offline tests); walkthrough: [How to detect hiring changes from public job-board APIs](https://agitools.hashnode.dev/how-to-detect-hiring-changes-from-public-job-board-apis-and-the-three-mistakes-that-make-them-useless) | Code |
 
 Every template uses **your own** Apify account and token, keeps its own memory (`monitorId`), caps the charge per run
 and skips job descriptions by default (smaller rows, no free text that may contain names or contact details).
