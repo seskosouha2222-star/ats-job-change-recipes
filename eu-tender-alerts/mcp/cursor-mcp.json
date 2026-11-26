@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "eu-tender-alerts": {
+      "url": "https://mcp.apify.com?tools=agitools/eu-tender-alerts"
+    }
+  }
+}

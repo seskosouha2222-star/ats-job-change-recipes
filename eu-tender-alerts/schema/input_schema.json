@@ -1,0 +1,196 @@
+{
+  "title": "EU Tender Alerts input",
+  "description": "Watch EU public tenders on TED. Pass the same monitorId on every scheduled run (or run a saved Task): each run returns only notices this watch has not delivered yet. Minimal call: {\"cpvCodes\": [\"72000000\"], \"countries\": [\"FR\"], \"monitorId\": \"it-fr\"}. Pricing: $0.002 per successful run and $0.003 per notice delivered (already delivered or filtered notices are free); set maxTotalChargeUsd on the run to cap spending.",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "keywords": {
+      "title": "Keywords",
+      "type": "array",
+      "editor": "stringList",
+      "description": "Full-text search terms (any of them matches), e.g. 'cybersecurity', 'facility management'. Letters, digits, spaces and . , ' & / + - only. Leave empty to watch by CPV code or country alone.",
+      "prefill": [
+        "software",
+        "cloud"
+      ]
+    },
+    "keywordScope": {
+      "title": "Keyword scope",
+      "type": "string",
+      "editor": "select",
+      "enum": [
+        "titleAndDescription",
+        "fullText"
+      ],
+      "enumTitles": [
+        "Titles and descriptions (precise, recommended)",
+        "Full notice text (broad: also matches addresses, URLs and boilerplate)"
+      ],
+      "default": "titleAndDescription",
+      "description": "Where keywords are searched. Full text finds more notices but many are false matches (for example 'cloud' in a document URL)."
+    },
+    "cpvCodes": {
+      "title": "CPV codes",
+      "type": "array",
+      "editor": "stringList",
+      "description": "Common Procurement Vocabulary codes. 8 digits (72000000 = IT services, sub-codes included) or a shorter prefix (7226 = all codes starting 7226).",
+      "prefill": [
+        "72000000",
+        "48000000"
+      ]
+    },
+    "countries": {
+      "title": "Buyer countries",
+      "type": "array",
+      "editor": "stringList",
+      "description": "Country of the contracting authority, as ISO codes: FR, DE, IT, ES, NL ... (2 or 3 letters). Empty = all countries publishing on TED.",
+      "prefill": [
+        "FR",
+        "DE"
+      ]
+    },
+    "noticeKinds": {
+      "title": "Notice kinds",
+      "type": "array",
+      "editor": "select",
+      "description": "Which notices to deliver. tenders = new calls for competition; updates = corrigenda and re-published tenders (with the changed deadline/value when the watch knows the original); awards = contract award results with winners and values; planning = prior information notices.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "tenders",
+          "updates",
+          "awards",
+          "planning"
+        ],
+        "enumTitles": [
+          "New tenders",
+          "Tender updates (corrigenda)",
+          "Contract awards",
+          "Planned procurement (prior information)"
+        ]
+      },
+      "default": [
+        "tenders",
+        "updates",
+        "awards"
+      ]
+    },
+    "minValue": {
+      "title": "Minimum value",
+      "type": "integer",
+      "editor": "number",
+      "minimum": 0,
+      "description": "Skip notices whose published estimated value (or award value) is below this amount, in the notice's currency (usually EUR). Notices without a published value are always kept. Skipped notices are free.",
+      "nullable": true
+    },
+    "monitorId": {
+      "title": "Monitor ID (keeps this watch's memory)",
+      "type": "string",
+      "editor": "textfield",
+      "description": "Any name for this watch, e.g. 'it-tenders-fr-de'. Use the same ID on every scheduled run so only new notices are returned. Saved Tasks get their own memory automatically.",
+      "prefill": "it-tenders-fr-de"
+    },
+    "lookbackDays": {
+      "title": "First-run look-back (days)",
+      "type": "integer",
+      "editor": "number",
+      "minimum": 1,
+      "maximum": 90,
+      "default": 7,
+      "description": "How far back the first run of a watch searches. Later runs continue from where the previous run stopped."
+    },
+    "firstRun": {
+      "title": "First run",
+      "type": "string",
+      "editor": "select",
+      "enum": [
+        "deliver",
+        "baseline"
+      ],
+      "enumTitles": [
+        "Deliver the notices of the look-back window",
+        "Record them silently (start clean, nothing charged per notice)"
+      ],
+      "default": "deliver",
+      "description": "What the first run of a new watch does with the notices it finds."
+    },
+    "expertQuery": {
+      "title": "Expert query (advanced)",
+      "type": "string",
+      "editor": "textarea",
+      "description": "Optional TED expert-search expression, AND-ed with the filters above, e.g. procedure-type=open. Do not filter on publication-date (the Actor manages the date window). Syntax: TED expert search help.",
+      "nullable": true
+    },
+    "language": {
+      "title": "Preferred language",
+      "type": "string",
+      "editor": "textfield",
+      "default": "eng",
+      "description": "3-letter code for titles when TED provides a translation (eng, fra, deu, ita, spa ...). Falls back to English, then the notice's official language."
+    },
+    "includeDescription": {
+      "title": "Include description",
+      "type": "boolean",
+      "default": true,
+      "description": "Add the procedure description (in its original language)."
+    },
+    "emitSummary": {
+      "title": "Add a run summary record",
+      "type": "boolean",
+      "default": true,
+      "description": "Adds one free record per run (recordType 'summary': window, matching notices, delivered, already delivered). A scheduled run then always returns a result, also when nothing is new. Turn off when every dataset row must be a notice."
+    },
+    "maxDescriptionChars": {
+      "title": "Max description length",
+      "type": "integer",
+      "editor": "number",
+      "minimum": 0,
+      "maximum": 5000,
+      "default": 1000,
+      "description": "Descriptions are cut at this many characters (descriptionTruncated says when)."
+    },
+    "maxNoticesPerRun": {
+      "title": "Max notices per run",
+      "type": "integer",
+      "editor": "number",
+      "minimum": 1,
+      "maximum": 5000,
+      "default": 500,
+      "description": "Upper bound on notices delivered (and charged) in one run. Remaining notices are delivered by the next run."
+    },
+    "maxPagesPerRun": {
+      "title": "Max search pages per run",
+      "type": "integer",
+      "editor": "number",
+      "minimum": 1,
+      "maximum": 20,
+      "default": 8,
+      "description": "Each page reads up to 250 matching notices from TED. Bounds run time for very broad watches."
+    },
+    "stateStoreName": {
+      "title": "Memory store name (advanced)",
+      "type": "string",
+      "editor": "textfield",
+      "nullable": true,
+      "description": "Explicit key-value store name for the watch memory, e.g. to share one memory between Tasks on purpose. Normally leave empty and use monitorId."
+    },
+    "requestTimeoutSecs": {
+      "title": "Request timeout (seconds)",
+      "type": "integer",
+      "editor": "number",
+      "minimum": 10,
+      "maximum": 120,
+      "default": 45,
+      "description": "Timeout per TED API request."
+    },
+    "maxRetries": {
+      "title": "Retries per request",
+      "type": "integer",
+      "editor": "number",
+      "minimum": 0,
+      "maximum": 3,
+      "default": 2,
+      "description": "Retries on timeouts and temporary TED errors (with backoff)."
+    }
+  }
+}

@@ -1,0 +1,477 @@
+{
+  "actorSpecification": 1,
+  "fields": {
+    "type": "object",
+    "properties": {
+      "recordType": {
+        "type": "string",
+        "enum": [
+          "notice",
+          "summary"
+        ]
+      },
+      "changeType": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "new_tender",
+          "tender_update",
+          "award",
+          "planned",
+          "other",
+          null
+        ]
+      },
+      "publicationNumber": {
+        "type": "string"
+      },
+      "publicationDate": {
+        "type": "string"
+      },
+      "noticeType": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "formType": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "noticeVersion": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "isChangeNotice": {
+        "type": "boolean"
+      },
+      "procedureId": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "title": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "titleLanguage": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "procedureTitle": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "description": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "descriptionTruncated": {
+        "type": "boolean"
+      },
+      "buyerName": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "buyerCity": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "buyerCountry": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "placeOfPerformance": {
+        "type": [
+          "array",
+          "null"
+        ]
+      },
+      "performanceAnywhere": {
+        "type": "boolean"
+      },
+      "cpvMain": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "cpvCodes": {
+        "type": [
+          "array",
+          "null"
+        ]
+      },
+      "contractNature": {
+        "type": [
+          "array",
+          "null"
+        ]
+      },
+      "procedureType": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "deadline": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "deadlineDate": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "deadlineType": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "tender",
+          "request_to_participate",
+          null
+        ]
+      },
+      "daysToDeadline": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "estimatedValue": {
+        "type": [
+          "number",
+          "null"
+        ]
+      },
+      "awardValue": {
+        "type": [
+          "number",
+          "null"
+        ]
+      },
+      "currency": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "winners": {
+        "type": [
+          "array",
+          "null"
+        ]
+      },
+      "documentsUrl": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "noticeUrl": {
+        "type": "string"
+      },
+      "pdfUrl": {
+        "type": "string"
+      },
+      "xmlUrl": {
+        "type": "string"
+      },
+      "officialLanguages": {
+        "type": [
+          "array",
+          "null"
+        ]
+      },
+      "lifecycle": {
+        "type": "object"
+      },
+      "monitorId": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "runId": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "detectedAt": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "source": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "attribution": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "checkedAt": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "windowSince": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "nextSince": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "matchingNotices": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "delivered": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "alreadyDelivered": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "filteredOut": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "recordedSilently": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "query": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "byChange": {
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "moreInNextRun": {
+        "type": [
+          "boolean",
+          "null"
+        ]
+      }
+    },
+    "required": [
+      "recordType"
+    ]
+  },
+  "views": {
+    "notices": {
+      "title": "Tender alerts",
+      "transformation": {
+        "fields": [
+          "recordType",
+          "changeType",
+          "publicationDate",
+          "title",
+          "buyerName",
+          "buyerCountry",
+          "cpvMain",
+          "deadline",
+          "deadlineType",
+          "daysToDeadline",
+          "estimatedValue",
+          "awardValue",
+          "currency",
+          "winners",
+          "noticeUrl",
+          "documentsUrl",
+          "publicationNumber",
+          "procedureId"
+        ]
+      },
+      "display": {
+        "component": "table",
+        "properties": {
+          "changeType": {
+            "label": "Change",
+            "format": "text"
+          },
+          "publicationDate": {
+            "label": "Published",
+            "format": "date"
+          },
+          "title": {
+            "label": "Title",
+            "format": "text"
+          },
+          "buyerName": {
+            "label": "Buyer",
+            "format": "text"
+          },
+          "buyerCountry": {
+            "label": "Country",
+            "format": "text"
+          },
+          "cpvMain": {
+            "label": "Main CPV",
+            "format": "text"
+          },
+          "deadline": {
+            "label": "Deadline",
+            "format": "text"
+          },
+          "daysToDeadline": {
+            "label": "Days left",
+            "format": "number"
+          },
+          "estimatedValue": {
+            "label": "Estimated value",
+            "format": "number"
+          },
+          "awardValue": {
+            "label": "Award value",
+            "format": "number"
+          },
+          "currency": {
+            "label": "Currency",
+            "format": "text"
+          },
+          "winners": {
+            "label": "Winners",
+            "format": "array"
+          },
+          "noticeUrl": {
+            "label": "TED notice",
+            "format": "link"
+          },
+          "documentsUrl": {
+            "label": "Tender documents",
+            "format": "link"
+          },
+          "publicationNumber": {
+            "label": "Publication no.",
+            "format": "text"
+          },
+          "procedureId": {
+            "label": "Procedure ID",
+            "format": "text"
+          },
+          "deadlineType": {
+            "label": "Deadline for",
+            "format": "text"
+          },
+          "recordType": {
+            "label": "Record",
+            "format": "text"
+          }
+        }
+      }
+    },
+    "summary": {
+      "title": "Run summaries",
+      "transformation": {
+        "fields": [
+          "recordType",
+          "checkedAt",
+          "windowSince",
+          "matchingNotices",
+          "delivered",
+          "alreadyDelivered",
+          "filteredOut",
+          "moreInNextRun",
+          "monitorId"
+        ]
+      },
+      "display": {
+        "component": "table",
+        "properties": {
+          "recordType": {
+            "label": "Record",
+            "format": "text"
+          },
+          "checkedAt": {
+            "label": "Checked at",
+            "format": "date"
+          },
+          "windowSince": {
+            "label": "Window from",
+            "format": "text"
+          },
+          "matchingNotices": {
+            "label": "Matching on TED",
+            "format": "number"
+          },
+          "delivered": {
+            "label": "Delivered",
+            "format": "number"
+          },
+          "alreadyDelivered": {
+            "label": "Already delivered",
+            "format": "number"
+          },
+          "filteredOut": {
+            "label": "Filtered out",
+            "format": "number"
+          },
+          "moreInNextRun": {
+            "label": "More in next run",
+            "format": "boolean"
+          },
+          "monitorId": {
+            "label": "Monitor",
+            "format": "text"
+          }
+        }
+      }
+    }
+  }
+}

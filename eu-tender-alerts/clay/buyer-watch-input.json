@@ -1,0 +1,12 @@
+{
+  "expertQuery": "buyer-name~\"{{Buyer name}}\"",
+  "noticeKinds": [
+    "tenders",
+    "updates",
+    "awards"
+  ],
+  "monitorId": "{{Monitor ID}}",
+  "lookbackDays": 30,
+  "includeDescription": false,
+  "maxNoticesPerRun": 25
+}
