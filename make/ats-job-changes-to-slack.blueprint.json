@@ -10,7 +10,7 @@
         "actor_search_type": "store",
         "actorId": "f8Fuu7hdQCdqIacme",
         "runSync": true,
-        "inputBodyf8Fuu7hdQCdqIacme": "{\n  \"companies\": [\n    \"greenhouse:stripe\",\n    \"https://jobs.lever.co/palantir\",\n    \"https://jobs.ashbyhq.com/openai\"\n  ],\n  \"monitorId\": \"make-slack-alerts\",\n  \"mode\": \"changes\",\n  \"emitBaseline\": false,\n  \"includeDescription\": false,\n  \"emitCompanySummaries\": false,\n  \"titleKeywords\": [\n    \"engineer\",\n    \"data\"\n  ]\n}",
+        "inputBodyf8Fuu7hdQCdqIacme": "{\n  \"companies\": [\n    \"greenhouse:stripe\",\n    \"https://jobs.lever.co/palantir\",\n    \"https://jobs.ashbyhq.com/openai\"\n  ],\n  \"monitorId\": \"make-slack-alerts\",\n  \"mode\": \"changes\",\n  \"emitBaseline\": false,\n  \"includeClosed\": false,\n  \"includeDescription\": false,\n  \"emitCompanySummaries\": false,\n  \"titleKeywords\": [\n    \"engineer\",\n    \"data\"\n  ]\n}",
         "maxTotalChargeUsd": "1"
       },
       "metadata": {
@@ -43,7 +43,7 @@
         "datasetId": "{{1.defaultDatasetId}}",
         "type": "clean",
         "format": "json",
-        "limit": "500"
+        "limit": "100000"
       },
       "metadata": {
         "designer": {

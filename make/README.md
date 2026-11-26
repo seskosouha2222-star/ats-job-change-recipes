@@ -5,7 +5,9 @@ app plus Make's built-in JSON and HTTP modules:
 
 1. **Apify → Run an Actor** runs ATS Job Changes Feed (`agitools/ats-jobs-delta`) synchronously for your companies,
    with **Maximum cost per run** set to $1.
-2. **Apify → Get Dataset Items** returns the run's records, one bundle each (up to 500 per run).
+2. **Apify → Get Dataset Items** returns every record of the run, one bundle each (limit 100,000). Nothing is lost
+   between runs this way: the Actor remembers what it already reported, so a record the scenario skipped would never
+   come back. The template sets `includeClosed: false`, so closed roles are not emitted at all.
 3. A filter keeps `job` records whose `changeType` is `new` or `reopened`; **JSON → Transform to JSON** encodes the
    message, so job titles with quotes, backslashes or line breaks still make a valid request.
 4. **HTTP → Make a request** posts it to a Slack incoming webhook.

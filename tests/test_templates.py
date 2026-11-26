@@ -156,6 +156,11 @@ def test_make_blueprint_structure():
     assert 0 < float(run["mapper"]["maxTotalChargeUsd"]) <= 1, "per-run charge cap"
     assert run["metadata"]["restore"]["expect"]["actorId"]["label"].endswith("(agitools/ats-jobs-delta)")
     assert items["module"] == "apify:fetchDatasetItems" and items["mapper"]["datasetId"] == "{{1.defaultDatasetId}}"
+    # Codex P2 on PR #2: the monitor advances on every run, so records the scenario does not fetch are never
+    # alerted later. Fetch the whole run (100000 = 20 companies at the default maxJobsPerCompany of 5000) and do
+    # not emit closed records, which the Slack filter drops anyway.
+    assert int(items["mapper"]["limit"]) >= 100000, "fetch every record of the run"
+    assert json.loads(run["mapper"][f"inputBody{ACTOR_ID}"])["includeClosed"] is False
     assert {c[1]["b"] for c in encode["filter"]["conditions"]} == {"new", "reopened"}
     assert post["module"] == "http:MakeRequest" and post["version"] == 4
     assert post["parameters"]["authenticationType"] == "noAuth"
