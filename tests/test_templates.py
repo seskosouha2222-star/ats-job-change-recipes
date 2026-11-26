@@ -237,3 +237,25 @@ def test_n8n_digest_code_runs_on_sample_records():
     assert "Acme: 12 open, +3 new, 1 closed (top: Sales)" in text
     assert "Stripe: 771 open (first week monitored)" in text     # real first-run record, run 8s9o9TKoDmlJsz4bV
     assert "Not read this week: broken" in text
+
+
+def test_n8n_slack_template_follows_creator_hub_note_rules():
+    """n8n template guidelines: one overview note (100-300 words, How it works / Setup / Customization) and, for 4+
+    nodes, section notes under 50 words. Checked before submitting to the n8n template library."""
+    wf = json.loads((ROOT / "n8n/ats-job-changes-to-slack.json").read_text())
+    notes = [n for n in wf["nodes"] if n["type"] == "n8n-nodes-base.stickyNote"]
+    working = [n for n in wf["nodes"] if n["type"] != "n8n-nodes-base.stickyNote"]
+    overview = [n for n in notes if "### Setup" in n["parameters"]["content"]]
+    assert len(overview) == 1
+    text = overview[0]["parameters"]["content"]
+    assert all(h in text for h in ("### How it works", "### Setup", "### Customization"))
+    assert 100 <= len(text.split()) <= 300
+    assert "color" not in overview[0]["parameters"], "overview note keeps the default yellow"
+    assert overview[0]["position"][0] < min(n["position"][0] for n in working), "overview note is top-left"
+    sections = [n for n in notes if n is not overview[0]]
+    assert len(working) < 4 or sections, "section notes are required for 4+ nodes"
+    for n in sections:
+        assert n["parameters"].get("color") == 7 and len(n["parameters"]["content"].split()) < 50
+    body = json.loads(actor_node(wf)["parameters"]["jsonBody"])
+    assert body["includeClosed"] is False, "the Slack filter drops closed records, so the Actor does not emit them"
+    assert "REPLACE/WITH/YOUR_WEBHOOK" in json.dumps(wf), "no real webhook URL ships"

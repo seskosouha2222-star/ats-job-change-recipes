@@ -3,18 +3,50 @@
   "nodes": [
     {
       "id": "fb525746-620f-5f76-a977-8666f09c44bd",
-      "name": "Setup",
+      "name": "Overview",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -480,
-        -120
+        -620,
+        -300
       ],
       "parameters": {
-        "content": "## New roles at your target companies \u2192 Slack\n1. **Run ATS Job Changes Feed**: create a Header Auth credential (`Authorization` = `Bearer <your Apify token>`), then edit `companies` (`greenhouse:<board>`, a Greenhouse/Lever/Ashby job-board URL, or a careers-page URL) and the optional `titleKeywords` / `locationKeywords`.\n2. **Post to Slack**: paste your Slack incoming-webhook URL.\n3. Activate. The first run is silent (`emitBaseline: false`); later runs return only roles that are new or reopened since the previous run.\n\nCost: pay per event on Apify, capped per run by `maxTotalChargeUsd`. Unchanged jobs are free.",
-        "width": 440,
-        "height": 360
+        "content": "## New or reopened roles at your target companies → Slack\n\n### How it works\nEvery morning this workflow runs the ATS Job Changes Feed Actor on Apify for the companies you list. The Actor reads their public Greenhouse, Lever or Ashby job boards and remembers what it saw on the previous run of the same `monitorId`. The filters keep job records that are **new** or **reopened** since then, and each one is posted to Slack as one message with the title, company, locations and link.\n\nThe first run only records the current openings and posts nothing. A run with no changes posts nothing, so a role is never announced twice.\n\n### Setup\n1. In Apify, copy your API token (Settings → API & Integrations).\n2. In n8n, create a **Header Auth** credential with Name `Authorization` and Value `Bearer <your token>`, and select it in **Run ATS Job Changes Feed**.\n3. In the same node, edit `companies` in the JSON body: `greenhouse:<board>`, a Greenhouse, Lever or Ashby board URL, or a careers-page URL.\n4. In Slack, create an incoming webhook and paste its URL into **Post to Slack**.\n5. Activate the workflow.\n\n### Customization\n- Change or remove `titleKeywords`, or add `locationKeywords`.\n- Use a different `monitorId` for each watch list.\n- Change the schedule in **Every morning**.\n\nThe Actor is pay-per-event on Apify (unchanged jobs are free) and `maxTotalChargeUsd` caps each run. The request waits up to 5 minutes, so split very long company lists. Built by AGI Tools, the Actor's publisher.",
+        "height": 820,
+        "width": 480
       }
+    },
+    {
+      "parameters": {
+        "content": "## Fetch changes since the last run\nRuns the Actor and waits for its results. Only records that changed since this monitor's previous run come back. If Apify fails or times out, the execution stops with an error and nothing is posted.",
+        "height": 340,
+        "width": 480,
+        "color": 7
+      },
+      "id": "fc19528f-26f2-5309-8025-f7f0165314a1",
+      "name": "Section: fetch changes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -180
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Alert on new and reopened roles\nKeeps only job records whose change is new or reopened, then posts one Slack message per role. n8n encodes the message, so quotes or line breaks in job titles are safe.",
+        "height": 340,
+        "width": 720,
+        "color": 7
+      },
+      "id": "ddf65db8-c34e-557d-b992-820dead975b3",
+      "name": "Section: alert",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        420,
+        -180
+      ]
     },
     {
       "id": "869d49ac-98da-58fe-939b-045ee4eee20f",
@@ -66,7 +98,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "{\n  \"companies\": [\n    \"greenhouse:stripe\",\n    \"https://jobs.lever.co/palantir\",\n    \"https://jobs.ashbyhq.com/openai\"\n  ],\n  \"monitorId\": \"n8n-slack-alerts\",\n  \"mode\": \"changes\",\n  \"emitBaseline\": false,\n  \"includeDescription\": false,\n  \"emitCompanySummaries\": false,\n  \"titleKeywords\": [\n    \"engineer\",\n    \"data\"\n  ]\n}",
+        "jsonBody": "{\n  \"companies\": [\n    \"greenhouse:stripe\",\n    \"https://jobs.lever.co/palantir\",\n    \"https://jobs.ashbyhq.com/openai\"\n  ],\n  \"monitorId\": \"n8n-slack-alerts\",\n  \"mode\": \"changes\",\n  \"emitBaseline\": false,\n  \"includeClosed\": false,\n  \"includeDescription\": false,\n  \"emitCompanySummaries\": false,\n  \"titleKeywords\": [\n    \"engineer\",\n    \"data\"\n  ]\n}",
         "options": {
           "timeout": 300000
         }
