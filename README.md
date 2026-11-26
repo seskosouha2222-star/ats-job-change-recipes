@@ -29,8 +29,16 @@ and skips job descriptions by default (smaller rows, no free text that may conta
   dataset schema, workflow structure is checked, and the repository is scanned for secrets.
 - **On Apify**: the Clay input format and the company-summary fields used by the digest and Sheets recipes were checked
   with a real run of the Actor (2026-11-25).
-- **Not yet imported by us on the external platform**: the n8n workflows, the Make blueprint, the Apps Script and the
-  Clay enrichment. They use each platform's documented formats; open an issue if an import fails.
+- **On the platforms (2026-11-26)**:
+  - **Clay**: Recipe A run on Clay's **Run Apify actor** enrichment for two accounts (a `greenhouse:` board and an
+    Ashby URL), with the Monitor ID formula from the Clay guide.
+  - **Make**: the blueprint imports into make.com with all modules recognized (Apify app, JSON, HTTP v4) and the Actor,
+    input and $1 cap restored. Run end to end into Slack: the alerts arrived in a Slack channel, and a second run
+    posted nothing (no repeats). Also published as a Make template (submitted for Make's public library).
+  - **n8n**: the three workflows import into n8n 2.49 (self-hosted). **New roles → Slack** run end to end with a
+    Header Auth credential (`Authorization: Bearer <token>`): the alerts arrived in a Slack channel, and a second run
+    posted nothing. The Google Sheets and weekly-digest workflows have not been run end to end yet.
+  - The Apps Script has not been run in Google Sheets yet.
 
 ## Quick start (Python, offline first)
 ```bash
@@ -54,8 +62,8 @@ python hiring_signals.py --companies greenhouse:stripe https://jobs.ashbyhq.com/
 - The first run for a company returns every open job as `new` with `baseline: true`. Set `emitBaseline: false` to
   start silently.
 - A `closed` record is only sent after a complete read of the board and the Actor's safety checks.
-- The n8n and Make templates call the Actor synchronously (up to 5 minutes). Keep watch lists small enough to finish
-  in that time; a run that outlasts the call keeps running on Apify, and its changes are only in that run's dataset.
+- The n8n and Make templates call the Actor synchronously (n8n: up to 5 minutes; Make: within your plan's scenario
+  timeout). Keep watch lists small enough to finish in that time; a run that outlasts the call keeps running on Apify, and its changes are only in that run's dataset.
   The Apps Script tracker resumes such a run automatically.
 
 ## Cost control

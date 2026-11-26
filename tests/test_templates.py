@@ -31,6 +31,8 @@ URL_RE = re.compile(r"^https://[^\s]+$")
 MONITOR_RE = re.compile(r"^[A-Za-z0-9_-]{1,40}$")
 TYPES = {"array": list, "boolean": bool, "integer": int, "string": str, "object": dict}
 
+ACTOR_ID = "f8Fuu7hdQCdqIacme"   # agitools/ats-jobs-delta; Make's Apify app stores the Actor by ID
+
 CLAY_SAMPLE = {"{{Job board}}": "greenhouse:stripe", "{{Monitor ID}}": "clay-stripe-com"}
 
 
@@ -81,7 +83,7 @@ def template_inputs():
     for path in n8n_workflows():
         out.append((path.name, json.loads(actor_node(json.loads(path.read_text()))["parameters"]["jsonBody"])))
     bp = json.loads((ROOT / "make/ats-job-changes-to-slack.blueprint.json").read_text())
-    out.append(("make blueprint", json.loads(bp["flow"][0]["mapper"]["data"])))
+    out.append(("make blueprint", json.loads(bp["flow"][0]["mapper"][f"inputBody{ACTOR_ID}"])))
     for path in sorted((ROOT / "clay").glob("*.json")):
         text = path.read_text()
         for k, v in CLAY_SAMPLE.items():
@@ -144,21 +146,43 @@ def test_n8n_structure(path):
 
 
 def test_make_blueprint_structure():
+    """Make template v2 (R51c): Make's official Apify app + HTTP v4; verified by import into make.com."""
     bp = json.loads((ROOT / "make/ats-job-changes-to-slack.blueprint.json").read_text())
     flow = bp["flow"]
     assert [m["id"] for m in flow] == [1, 2, 3, 4]
-    assert flow[0]["module"] == "http:ActionSendData" and "maxTotalChargeUsd=" in flow[0]["mapper"]["url"]
-    assert flow[1]["module"] == "builtin:BasicFeeder" and flow[1]["mapper"]["array"] == "{{1.data}}"
-    conds = flow[2]["filter"]["conditions"]
-    assert {c[1]["b"] for c in conds} == {"new", "reopened"}
-    assert flow[0]["mapper"]["headers"][0]["value"] == "Bearer YOUR_APIFY_TOKEN"
+    run, items, encode, post = flow
+    assert run["module"] == "apify:runActorNew" and run["mapper"]["actorId"] == ACTOR_ID
+    assert run["mapper"]["runSync"] is True
+    assert 0 < float(run["mapper"]["maxTotalChargeUsd"]) <= 1, "per-run charge cap"
+    assert run["metadata"]["restore"]["expect"]["actorId"]["label"].endswith("(agitools/ats-jobs-delta)")
+    assert items["module"] == "apify:fetchDatasetItems" and items["mapper"]["datasetId"] == "{{1.defaultDatasetId}}"
+    # Codex P2 on PR #2: the monitor advances on every run, so records the scenario does not fetch are never
+    # alerted later. Fetch the whole run (100000 = 20 companies at the default maxJobsPerCompany of 5000) and do
+    # not emit closed records, which the Slack filter drops anyway.
+    assert int(items["mapper"]["limit"]) >= 100000, "fetch every record of the run"
+    assert json.loads(run["mapper"][f"inputBody{ACTOR_ID}"])["includeClosed"] is False
+    assert {c[1]["b"] for c in encode["filter"]["conditions"]} == {"new", "reopened"}
+    assert post["module"] == "http:MakeRequest" and post["version"] == 4
+    assert post["parameters"]["authenticationType"] == "noAuth"
+    assert "legacy" not in json.dumps(bp).lower() and "ActionSendData" not in json.dumps(bp)
+
+
+def test_make_blueprint_ships_no_account_data():
+    """Make copies the builder's connection ID and account email into module metadata; neither may ship."""
+    text = (ROOT / "make/ats-job-changes-to-slack.blueprint.json").read_text()
+    bp = json.loads(text)
+    for m in bp["flow"]:
+        assert "__IMTCONN__" not in m["parameters"], "customer picks their own Apify connection"
+        assert "parameters" not in m.get("metadata", {}).get("restore", {}), "no saved connection label"
+    assert "@" not in text.replace("@ats", ""), "no e-mail address"
+    assert "Bearer" not in text and "apify_api_" not in text
 
 
 def test_make_slack_body_is_json_encoded_by_make():
     """Codex P2 on PR #1: job titles with quotes or line breaks must not be pasted raw into JSON source."""
     flow = json.loads((ROOT / "make/ats-job-changes-to-slack.blueprint.json").read_text())["flow"]
     assert flow[2]["module"] == "json:TransformToJSON"
-    body = flow[3]["mapper"]["data"]
+    body = flow[3]["mapper"]["jsonStringBodyContent"]
     assert body == '{"text": {{3.json}}}'
     assert "{{2." not in body, "no raw record values inside the JSON body"
     # What Make sends for a hostile title: the encoded string keeps the body valid JSON.

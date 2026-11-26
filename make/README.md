@@ -1,28 +1,45 @@
 # Make: new roles to Slack (importable blueprint)
 
-[`ats-job-changes-to-slack.blueprint.json`](ats-job-changes-to-slack.blueprint.json) uses only Make's built-in HTTP
-module and Iterator, so it imports into any Make account without extra apps:
+[`ats-job-changes-to-slack.blueprint.json`](ats-job-changes-to-slack.blueprint.json) uses Make's official **Apify**
+app plus Make's built-in JSON and HTTP modules:
 
-1. **HTTP** runs the ATS Job Changes Feed (`run-sync-get-dataset-items`) for your companies with a per-run charge cap.
-2. **Iterator** splits the returned records.
+1. **Apify → Run an Actor** runs ATS Job Changes Feed (`agitools/ats-jobs-delta`) synchronously for your companies,
+   with **Maximum cost per run** set to $1.
+2. **Apify → Get Dataset Items** returns every record of the run, one bundle each (limit 100,000). Nothing is lost
+   between runs this way: the Actor remembers what it already reported, so a record the scenario skipped would never
+   come back. The template sets `includeClosed: false`, so closed roles are not emitted at all.
 3. A filter keeps `job` records whose `changeType` is `new` or `reopened`; **JSON → Transform to JSON** encodes the
    message, so job titles with quotes, backslashes or line breaks still make a valid request.
-4. **HTTP** posts it to a Slack incoming webhook.
+4. **HTTP → Make a request** posts it to a Slack incoming webhook.
 
-Import: Scenarios → **Create a new scenario** → ⋯ → **Import Blueprint**. Then:
-- in module 1, replace `YOUR_APIFY_TOKEN` with your own Apify API token (or move the header into a Make keychain
-  connection) and edit the companies and filters in the request body;
-- in module 4, paste your Slack incoming-webhook URL;
-- schedule the scenario (for example daily). Keep `monitorId` unchanged: it is the memory that returns only changes.
-- keep the watch list small enough for a run to finish within the synchronous call's 5 minutes (a few dozen boards
-  without descriptions finish in well under a minute). A run that outlasts the call keeps running on Apify and its
-  changes are only in that run's dataset (Apify Console → Runs).
+Your Apify account is connected once, in Make (Apify module → **Add** connection → sign in with Apify, or paste an
+API token). The blueprint contains no token and no connection, so nothing secret is shared when you share it.
 
-Prefer Make's apps? The same flow works with Apify's own Make app (**Run an Actor** or **Watch Actor Runs** → **Get
-Dataset Items**) and Make's Slack or Google Sheets modules; see [`../no-code/make-zapier-sheets.md`](../no-code/make-zapier-sheets.md).
+## Set up
+1. Scenarios → **Create a new scenario** → ⋯ → **Import blueprint** → choose the file.
+2. Module 1: pick your Apify connection; edit `companies` (a board such as `greenhouse:stripe`, a job-board URL or a
+   careers-page URL), `titleKeywords` and the other filters in **Input JSON**.
+3. Module 4: replace the URL with your Slack incoming-webhook URL.
+4. Schedule the scenario (daily is typical). Keep `monitorId` unchanged: it is the memory that returns only changes.
 
-Status: the blueprint structure is checked by this repository's offline tests (modules, filter, Actor input against
-the Actor's input schema). Import on make.com has not yet been verified by us; please open an issue if a module needs
-an update.
+Good to know
+- The first run with `emitBaseline: false` stores the current openings silently; alerts start with the next run.
+  Re-running is safe: a role is reported once, when it appears (or reappears).
+- Keep the watch list small enough for the run to finish within your Make plan's scenario timeout (a few dozen boards
+  without descriptions finish in well under a minute). A run that outlasts it keeps running on Apify; use **Apify →
+  Watch Actor Runs** as the trigger instead for large lists.
+- Lever and Ashby boards do not return a company name; the message falls back to the board name.
+
+Prefer Make's Slack or Google Sheets modules? Replace module 4; see
+[`../no-code/make-zapier-sheets.md`](../no-code/make-zapier-sheets.md).
+
+Also available as a Make template:
+[New roles at target companies to Slack](https://www.make.com/en/integration/25728-new-roles-at-target-companies-to-slack-ats-job-changes-feed?templatePublicId=25728)
+(open it in Make and follow the setup wizard).
+
+Status: tested on make.com on 2026-11-26 (import, a run into a Slack channel, and a repeat run that posted nothing).
+The 100,000 limit (Make's maximum for this field) and `includeClosed: false` were re-run on make.com the same day:
+the run succeeded and posted nothing new.
+See "What has been tested" in the [main README](../README.md#what-has-been-tested).
 
 Not affiliated with Make or Apify. Built by AGI Tools Team.

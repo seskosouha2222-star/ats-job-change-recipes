@@ -29,17 +29,24 @@ the same time (the second run stops before reading or charging anything). A per-
 keeps every account's history separate.
 
 ## Recipe A: new and reopened roles per account (sales trigger)
-1. **Add enrichment → Run Apify Actor**, Actor `agitools/ats-jobs-delta`.
-2. Input: paste [`new-roles-input.json`](new-roles-input.json). It reads one company per row with that row's
-   `Monitor ID`, so every later run returns only what changed for that account.
-3. Set the enrichment to re-run on a schedule (for example weekly) if your Clay plan supports it.
+1. **Add column → Add enrichment → Run Apify actor**, choose your Apify account, then pick **ATS Job Changes Feed**
+   in **Apify actor** (type `ats-jobs-delta` to filter the list).
+2. **Input data**: paste [`new-roles-input.json`](new-roles-input.json), then replace the two placeholders with real
+   column references: delete `{{Job board}}`, type `/` and choose the **Job board** column; do the same for
+   `{{Monitor ID}}`. Clay does not fill in typed `{{...}}` text: if a placeholder stays as text, the Actor rejects
+   the input ("monitorId must be 1-40 characters") before reading anything, and Clay shows the row as failed.
+3. Turn the column's **Auto-run** off while you test, or add a run condition such as "Job board is not empty", so
+   blank rows do not start runs. Then run a couple of rows, check them, and run the rest.
 4. Map the output (dataset items) to columns, see the mapping table below. Add a formula column such as
    "new roles this run" = count of items with `changeType` = `new`.
+5. Re-run the column on a schedule (for example weekly) if your Clay plan supports it.
 
-The first run per account is silent (`emitBaseline: false`); new roles appear from the next run on.
+The first run per account is silent (`emitBaseline: false`): it returns one company record (open roles, top
+departments) and stores the current openings; new and reopened roles appear from the next run on.
 
 ## Recipe B: hiring signals per account (free beta)
-Paste [`hiring-signals-input.json`](hiring-signals-input.json) instead. It adds free `signal` records: first role in
+Paste [`hiring-signals-input.json`](hiring-signals-input.json) instead (replace the placeholders with `/` column
+references as in Recipe A). It adds free `signal` records: first role in
 a new department or country, first roles naming a technology, hiring acceleration or slowdown against the company's
 own baseline, leadership hiring, seniority-mix shifts and a hiring-trend summary.
 
@@ -75,5 +82,8 @@ options if available, or in the Actor's run options.
 - `companyName` is empty for Lever and Ashby boards (their APIs do not return it); use `companySlug`.
 - Two tables that use the same `Monitor ID` for an account would consume each other's changes. Use a different
   prefix per table (`clay-`, `clay2-`, ...) and keep it different from your other monitors.
+
+Tested on Clay on 2026-11-26 (Recipe A, two accounts: a `greenhouse:` board and an Ashby URL; Monitor ID formula
+above; Clay's Apify connection with the user's own token).
 
 Not affiliated with Clay or Apify. Built by AGI Tools Team.
