@@ -38,6 +38,8 @@ Also available as a Make template:
 (open it in Make and follow the setup wizard).
 
 Status: tested on make.com on 2026-11-26 (import, a run into a Slack channel, and a repeat run that posted nothing).
+The 100,000 limit (Make's maximum for this field) and `includeClosed: false` were re-run on make.com the same day:
+the run succeeded and posted nothing new.
 See "What has been tested" in the [main README](../README.md#what-has-been-tested).
 
 Not affiliated with Make or Apify. Built by AGI Tools Team.
