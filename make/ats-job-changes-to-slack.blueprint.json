@@ -3,58 +3,62 @@
   "flow": [
     {
       "id": 1,
-      "module": "http:ActionSendData",
-      "version": 3,
-      "parameters": {
-        "handleErrors": false,
-        "useNewZLibDeCompress": true
-      },
+      "module": "apify:runActorNew",
+      "version": 1,
+      "parameters": {},
       "mapper": {
-        "url": "https://api.apify.com/v2/acts/agitools~ats-jobs-delta/run-sync-get-dataset-items?clean=true&maxTotalChargeUsd=1",
-        "serializeUrl": false,
-        "method": "post",
-        "headers": [
-          {
-            "name": "Authorization",
-            "value": "Bearer YOUR_APIFY_TOKEN"
-          }
-        ],
-        "qs": [],
-        "bodyType": "raw",
-        "parseResponse": true,
-        "authUser": "",
-        "authPass": "",
-        "timeout": "300",
-        "shareCookies": false,
-        "ca": "",
-        "rejectUnauthorized": true,
-        "followRedirect": true,
-        "useQuerystring": false,
-        "gzip": true,
-        "useMtls": false,
-        "contentType": "application/json",
-        "data": "{\n  \"companies\": [\n    \"greenhouse:stripe\",\n    \"https://jobs.lever.co/palantir\",\n    \"https://jobs.ashbyhq.com/openai\"\n  ],\n  \"monitorId\": \"make-slack-alerts\",\n  \"mode\": \"changes\",\n  \"emitBaseline\": false,\n  \"includeDescription\": false,\n  \"emitCompanySummaries\": false,\n  \"titleKeywords\": [\n    \"engineer\",\n    \"data\"\n  ]\n}",
-        "followAllRedirects": false
+        "actor_search_type": "store",
+        "actorId": "f8Fuu7hdQCdqIacme",
+        "runSync": true,
+        "inputBodyf8Fuu7hdQCdqIacme": "{\n  \"companies\": [\n    \"greenhouse:stripe\",\n    \"https://jobs.lever.co/palantir\",\n    \"https://jobs.ashbyhq.com/openai\"\n  ],\n  \"monitorId\": \"make-slack-alerts\",\n  \"mode\": \"changes\",\n  \"emitBaseline\": false,\n  \"includeDescription\": false,\n  \"emitCompanySummaries\": false,\n  \"titleKeywords\": [\n    \"engineer\",\n    \"data\"\n  ]\n}",
+        "maxTotalChargeUsd": "1"
       },
       "metadata": {
         "designer": {
           "x": 0,
           "y": 0
+        },
+        "restore": {
+          "expect": {
+            "actor_search_type": {
+              "label": "Apify Store Actors"
+            },
+            "runSync": {
+              "mode": "chose"
+            },
+            "actorId": {
+              "mode": "chose",
+              "label": "ATS Job Changes Feed — Greenhouse, Lever & Ashby (agitools/ats-jobs-delta)"
+            }
+          }
         }
       }
     },
     {
       "id": 2,
-      "module": "builtin:BasicFeeder",
+      "module": "apify:fetchDatasetItems",
       "version": 1,
       "parameters": {},
       "mapper": {
-        "array": "{{1.data}}"
+        "datasetId": "{{1.defaultDatasetId}}",
+        "type": "clean",
+        "format": "json",
+        "limit": "500"
       },
       "metadata": {
         "designer": {
           "x": 300,
           "y": 0
+        },
+        "restore": {
+          "expect": {
+            "type": {
+              "label": "Clean"
+            },
+            "format": {
+              "label": "JSON"
+            }
+          }
         }
       }
     },
@@ -106,33 +110,24 @@
     },
     {
       "id": 4,
-      "module": "http:ActionSendData",
-      "version": 3,
+      "module": "http:MakeRequest",
+      "version": 4,
       "parameters": {
-        "handleErrors": false,
-        "useNewZLibDeCompress": true
+        "authenticationType": "noAuth",
+        "tlsType": ""
       },
       "mapper": {
         "url": "https://hooks.slack.com/services/REPLACE/WITH/YOUR_WEBHOOK",
-        "serializeUrl": false,
         "method": "post",
-        "headers": [],
-        "qs": [],
-        "bodyType": "raw",
+        "contentType": "json",
+        "inputMethod": "jsonString",
+        "jsonStringBodyContent": "{\"text\": {{3.json}}}",
         "parseResponse": false,
-        "authUser": "",
-        "authPass": "",
-        "timeout": "",
+        "stopOnHttpError": true,
+        "timeout": "40",
+        "allowRedirects": true,
         "shareCookies": false,
-        "ca": "",
-        "rejectUnauthorized": true,
-        "followRedirect": true,
-        "useQuerystring": false,
-        "gzip": true,
-        "useMtls": false,
-        "contentType": "application/json",
-        "data": "{\"text\": {{3.json}}}",
-        "followAllRedirects": false
+        "requestCompressedContent": true
       },
       "metadata": {
         "designer": {
