@@ -78,10 +78,31 @@ def node_eval(js: str) -> str:
     return subprocess.run(["node", "-e", js], cwd=ROOT, capture_output=True, text=True, check=True).stdout
 
 
+def set_node_values(wf: dict, name: str) -> dict:
+    """Values of an n8n Edit Fields (Set) node, typed the way n8n types them."""
+    node = next(n for n in wf["nodes"] if n["name"] == name)
+    out = {}
+    for a in node["parameters"]["assignments"]["assignments"]:
+        v = a["value"]
+        out[a["name"]] = json.loads(v) if a["type"] in ("array", "object") else float(v) if a["type"] == "number" else v
+    return out
+
+
+def n8n_actor_input(wf: dict) -> dict:
+    """The Actor input a workflow sends: a literal JSON body, or a body expression evaluated by Node against the
+    workflow's Configuration node (what n8n itself does at run time)."""
+    body = actor_node(wf)["parameters"]["jsonBody"]
+    if not body.startswith("="):
+        return json.loads(body)
+    expr = re.fullmatch(r"=\{\{(.*)\}\}", body, re.S).group(1)
+    cfg = set_node_values(wf, "Configuration")
+    return json.loads(node_eval(f"const $json = {json.dumps(cfg)}; console.log({expr});"))
+
+
 def template_inputs():
     out = []
     for path in n8n_workflows():
-        out.append((path.name, json.loads(actor_node(json.loads(path.read_text()))["parameters"]["jsonBody"])))
+        out.append((path.name, n8n_actor_input(json.loads(path.read_text()))))
     bp = json.loads((ROOT / "make/ats-job-changes-to-slack.blueprint.json").read_text())
     out.append(("make blueprint", json.loads(bp["flow"][0]["mapper"][f"inputBody{ACTOR_ID}"])))
     for path in sorted((ROOT / "clay").glob("*.json")):
@@ -119,7 +140,14 @@ def referenced_fields(text: str) -> set[str]:
                                   ROOT / "google-sheets/ats-job-changes.gs",
                                   ROOT / "javascript/ats-job-changes.mjs"], ids=lambda p: p.name)
 def test_referenced_output_fields_exist(path):
-    produced_here = {"text"} if path.name == "weekly-company-hiring-digest.json" else set()   # Code node output
+    produced_here = set()
+    if path.suffix == ".json" and path.parent.name == "n8n":
+        wf = json.loads(path.read_text())
+        if any(n["type"] == "n8n-nodes-base.code" for n in wf["nodes"]):
+            produced_here.add("text")                                      # Code node output
+        for n in wf["nodes"]:                                              # fields set by Edit Fields nodes
+            if n["type"] == "n8n-nodes-base.set" and "assignments" in n["parameters"]:
+                produced_here |= {a["name"] for a in n["parameters"]["assignments"]["assignments"]}
     unknown = referenced_fields(path.read_text()) - OUTPUT_FIELDS - produced_here
     assert not unknown, f"{path.name} reads fields the Actor does not output: {sorted(unknown)}"
 
@@ -239,10 +267,11 @@ def test_n8n_digest_code_runs_on_sample_records():
     assert "Not read this week: broken" in text
 
 
-def test_n8n_slack_template_follows_creator_hub_note_rules():
+@pytest.mark.parametrize("name", ["ats-job-changes-to-slack.json", "account-hiring-intelligence.json"])
+def test_n8n_library_templates_follow_creator_hub_note_rules(name):
     """n8n template guidelines: one overview note (100-300 words, How it works / Setup / Customization) and, for 4+
     nodes, section notes under 50 words. Checked before submitting to the n8n template library."""
-    wf = json.loads((ROOT / "n8n/ats-job-changes-to-slack.json").read_text())
+    wf = json.loads((ROOT / "n8n" / name).read_text())
     notes = [n for n in wf["nodes"] if n["type"] == "n8n-nodes-base.stickyNote"]
     working = [n for n in wf["nodes"] if n["type"] != "n8n-nodes-base.stickyNote"]
     overview = [n for n in notes if "### Setup" in n["parameters"]["content"]]
@@ -256,6 +285,7 @@ def test_n8n_slack_template_follows_creator_hub_note_rules():
     assert len(working) < 4 or sections, "section notes are required for 4+ nodes"
     for n in sections:
         assert n["parameters"].get("color") == 7 and len(n["parameters"]["content"].split()) < 50
-    body = json.loads(actor_node(wf)["parameters"]["jsonBody"])
-    assert body["includeClosed"] is False, "the Slack filter drops closed records, so the Actor does not emit them"
+    if name == "ats-job-changes-to-slack.json":
+        body = n8n_actor_input(wf)
+        assert body["includeClosed"] is False, "the Slack filter drops closed records, so the Actor does not emit them"
     assert "REPLACE/WITH/YOUR_WEBHOOK" in json.dumps(wf), "no real webhook URL ships"

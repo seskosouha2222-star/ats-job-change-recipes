@@ -1,0 +1,907 @@
+{
+  "name": "Account hiring intelligence: job-board changes to Google Sheets and Slack (ATS Job Changes Feed)",
+  "nodes": [
+    {
+      "id": "1c7204fb-3964-5fe4-9318-726af80c6eb7",
+      "name": "Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -760,
+        -420
+      ],
+      "parameters": {
+        "content": "## Account hiring intelligence: job-board changes → Google Sheets history + Slack digest\n\n### How it works\nEvery weekday this workflow runs the ATS Job Changes Feed Actor on Apify for your target accounts (public Greenhouse, Lever or Ashby boards). The Actor remembers the previous run of the same `monitorId` and returns only what changed, a summary per company and free hiring signals.\n\n- **Job changes** (new, changed, reopened, closed) are kept as history in the *Job changes* tab.\n- **Account snapshots** (open roles, new and closed counts, top departments) update one row per company in *Accounts*.\n- **Signals** you care about (new department, new country, leadership hiring…) above a confidence threshold go to *Signals*.\n- One **Slack digest** per run lists new or reopened roles and those signals, grouped by account. Nothing new → no message.\n- Boards that could not be read, and a failed run, are reported to Slack instead of being written.\n\n### Setup\n1. Apify: copy your API token. n8n: create a **Header Auth** credential (Name `Authorization`, Value `Bearer <token>`) and select it in **Run ATS Job Changes Feed**.\n2. Google Sheets: create a spreadsheet with tabs *Job changes*, *Accounts* and *Signals* (header rows are written automatically), connect your Google credential in the three Sheets nodes.\n3. Slack: create an incoming webhook.\n4. Fill in **Configuration**: companies, spreadsheet URL, webhook URL.\n\n### Customization\nEdit `alertSignalTypes` and `minConfidence` in **Configuration**; change the schedule; use one `monitorId` per watch list. The first run records a baseline and posts nothing; rate signals need about a week of runs. Pay per event on Apify (unchanged jobs are free); `maxTotalChargeUsd` caps each run. Built by AGI Tools, the Actor's publisher.",
+        "height": 1060,
+        "width": 560
+      }
+    },
+    {
+      "id": "b7f94170-99c9-5b2c-a710-4915f7e16d10",
+      "name": "Section: configure and fetch",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -260
+      ],
+      "parameters": {
+        "content": "Edit **Configuration** only. The Actor call returns every record of the run; a failed call goes to the failure alert.",
+        "height": 140,
+        "width": 700,
+        "color": 7
+      }
+    },
+    {
+      "id": "39a184a3-5556-52db-928b-03602a3479f1",
+      "name": "Section: history in Google Sheets",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        700,
+        -420
+      ],
+      "parameters": {
+        "content": "Three tabs: job changes (history), accounts (one row per company, updated), signals (history). Row keys make reruns safe.",
+        "height": 140,
+        "width": 1180,
+        "color": 7
+      }
+    },
+    {
+      "id": "4efe71cf-9d02-5c78-9a57-e48171a7e117",
+      "name": "Section: Slack digest and failures",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        700,
+        560
+      ],
+      "parameters": {
+        "content": "One digest per run with new roles and selected signals. Unread boards and failed runs are reported, never written.",
+        "height": 140,
+        "width": 1180,
+        "color": 7
+      }
+    },
+    {
+      "id": "b303f8a5-4677-5c97-a935-9833748e10fa",
+      "name": "Every weekday at 7:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "7e88f5af-7971-5791-bb58-9d34665fc144",
+      "name": "Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b8aa908e-c84e-5a2c-8aaa-d4b07a597fb0",
+              "name": "companies",
+              "type": "array",
+              "value": "[\"greenhouse:stripe\", \"https://jobs.lever.co/palantir\", \"https://jobs.ashbyhq.com/openai\"]"
+            },
+            {
+              "id": "3e7d4e03-673b-5cdd-a4f9-0556a4a8e7a8",
+              "name": "monitorId",
+              "type": "string",
+              "value": "n8n-account-intelligence"
+            },
+            {
+              "id": "17507e2a-71a2-592a-b8d9-88f725b2494d",
+              "name": "alertSignalTypes",
+              "type": "array",
+              "value": "[\"new_department\", \"geographic_expansion\", \"leadership_hiring\", \"hiring_acceleration\", \"hiring_slowdown\"]"
+            },
+            {
+              "id": "0e5fee3f-24b4-537f-a7b7-204338336f41",
+              "name": "minConfidence",
+              "type": "number",
+              "value": "0.6"
+            },
+            {
+              "id": "549c129d-ef39-587d-ada5-9cfd56ce8a60",
+              "name": "spreadsheetUrl",
+              "type": "string",
+              "value": "https://docs.google.com/spreadsheets/d/REPLACE_WITH_YOUR_SHEET_ID/edit"
+            },
+            {
+              "id": "46066ca8-1929-5d3f-8647-5ae7465134b1",
+              "name": "slackWebhookUrl",
+              "type": "string",
+              "value": "https://hooks.slack.com/services/REPLACE/WITH/YOUR_WEBHOOK"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "90694726-8187-5313-89f3-c413c234a671",
+      "name": "Run ATS Job Changes Feed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/agitools~ats-jobs-delta/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "maxTotalChargeUsd",
+              "value": "1"
+            },
+            {
+              "name": "clean",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ companies: $json.companies, monitorId: $json.monitorId, mode: 'changes', emitBaseline: false, emitSignals: true, emitCompanySummaries: true, includeClosed: true, includeDescription: false }) }}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Waits up to 5 minutes. A longer run keeps running on Apify and its changes stay in that run's dataset."
+    },
+    {
+      "id": "e7bcc269-f7c5-5de4-9684-0e2babf44c10",
+      "name": "Route by record type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        700,
+        -120
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "a843f531-d756-5672-ae7e-7c4bb0c76809",
+                    "leftValue": "={{ $json.recordType }}",
+                    "rightValue": "job",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "job"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "8cad6ddc-c7c0-5c56-8409-15e9b3114b60",
+                    "leftValue": "={{ $json.recordType }}",
+                    "rightValue": "company",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "company"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "c29b9f36-f317-548a-bf69-bd66064a16d2",
+                    "leftValue": "={{ $json.recordType }}",
+                    "rightValue": "signal",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "signal"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "308b4f72-8785-5ad9-8235-cb295b57c495",
+      "name": "Job change row",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        960,
+        -300
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "44702737-eca2-5597-be9b-309e5db024ca",
+              "name": "eventId",
+              "type": "string",
+              "value": "={{ [$json.ats, $json.companySlug, $json.jobId, $json.changeType, $now.toISODate()].join('|') }}"
+            },
+            {
+              "id": "1e90b2b2-58a8-5a80-95c6-72f27f35ed0b",
+              "name": "runDate",
+              "type": "string",
+              "value": "={{ $now.toISODate() }}"
+            },
+            {
+              "id": "b30616a3-10a4-5541-a143-492ec6a9eb62",
+              "name": "company",
+              "type": "string",
+              "value": "={{ $json.companyName || $json.companySlug }}"
+            },
+            {
+              "id": "c5e07c55-08dd-5ee8-b883-22976478ebcd",
+              "name": "changeType",
+              "type": "string",
+              "value": "={{ $json.changeType }}"
+            },
+            {
+              "id": "13d71158-feec-5d7b-a36a-92ea801645ba",
+              "name": "title",
+              "type": "string",
+              "value": "={{ $json.title }}"
+            },
+            {
+              "id": "68074a14-e11b-5371-a95a-e351e6f98cf9",
+              "name": "changedFields",
+              "type": "string",
+              "value": "={{ ($json.changedFields || []).join(', ') }}"
+            },
+            {
+              "id": "e197a4d0-1d7d-5987-87c8-342cfd3475c0",
+              "name": "department",
+              "type": "string",
+              "value": "={{ $json.department }}"
+            },
+            {
+              "id": "2e2dc070-bd28-5d55-b9e4-7ac18b0136ab",
+              "name": "locations",
+              "type": "string",
+              "value": "={{ ($json.locations || []).join(' / ') }}"
+            },
+            {
+              "id": "ddb41c26-ebe6-5280-af72-a431aa9a4c43",
+              "name": "firstSeenAt",
+              "type": "string",
+              "value": "={{ $json.firstSeenAt }}"
+            },
+            {
+              "id": "d1cccc23-d358-575d-a6b9-46b138bf07f5",
+              "name": "closedAt",
+              "type": "string",
+              "value": "={{ $json.closedAt }}"
+            },
+            {
+              "id": "4f259da6-87c0-5675-9131-8fb1a74b2ba8",
+              "name": "url",
+              "type": "string",
+              "value": "={{ $json.url }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a317df79-56dc-5f04-b208-1eced18fc07b",
+      "name": "Job changes history",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1200,
+        -300
+      ],
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $('Configuration').first().json.spreadsheetUrl }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Job changes"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "eventId"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "notes": "Writes to the 'Job changes' tab. Re-running updates the row with the same eventId."
+    },
+    {
+      "id": "815e47e6-34fb-58ae-be3c-04e4ee51edb4",
+      "name": "Board read?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        -100
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "ec1f4cbc-a639-5d33-9d32-29a7c3beced5",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "ok",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "6d9a2549-0a99-5d2e-90b5-32020a1c93df",
+      "name": "Account row",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1200,
+        -140
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "165e1a87-419d-5f81-9c88-79cbe60a5f3e",
+              "name": "companyKey",
+              "type": "string",
+              "value": "={{ $json.ats + ':' + $json.companySlug }}"
+            },
+            {
+              "id": "b30616a3-10a4-5541-a143-492ec6a9eb62",
+              "name": "company",
+              "type": "string",
+              "value": "={{ $json.companyName || $json.companySlug }}"
+            },
+            {
+              "id": "c36b2025-7a34-5056-96bb-386e2f86b71d",
+              "name": "lastChecked",
+              "type": "string",
+              "value": "={{ $now.toISO() }}"
+            },
+            {
+              "id": "70b10c57-1ff9-5217-989f-0bb1b1e17eed",
+              "name": "openJobs",
+              "type": "number",
+              "value": "={{ $json.openJobs }}"
+            },
+            {
+              "id": "10e76c8c-e9e7-5ec3-b5ac-8a29229a6527",
+              "name": "newJobs",
+              "type": "number",
+              "value": "={{ $json.newJobs }}"
+            },
+            {
+              "id": "71f93724-0827-5bf5-9a6d-7322b5fb4ada",
+              "name": "changedJobs",
+              "type": "number",
+              "value": "={{ $json.changedJobs }}"
+            },
+            {
+              "id": "23c5a62c-b9dd-5498-98d3-ce4b902bd906",
+              "name": "closedJobs",
+              "type": "number",
+              "value": "={{ $json.closedJobs }}"
+            },
+            {
+              "id": "288e0521-f08b-5072-a0a6-d98a0c983f6b",
+              "name": "remoteShare",
+              "type": "number",
+              "value": "={{ $json.remoteShare }}"
+            },
+            {
+              "id": "2d0ae45a-5386-520f-9074-67c118b021c9",
+              "name": "topDepartments",
+              "type": "string",
+              "value": "={{ ($json.topDepartments || []).slice(0, 3).map(d => d.name + ' (' + d.jobs + ')').join(', ') }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "d0f8e3ff-d97b-5622-8c6b-f4869dfb94cb",
+      "name": "Accounts snapshot",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1440,
+        -140
+      ],
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $('Configuration').first().json.spreadsheetUrl }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Accounts"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "companyKey"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "notes": "Writes to the 'Accounts' tab. Re-running updates the row with the same companyKey."
+    },
+    {
+      "id": "c4566ca1-b6f9-5588-b249-923f245ca8f0",
+      "name": "Alert-worthy signals",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        960,
+        100
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "738a1a4f-2c63-5e8c-803e-344c49ccc0d5",
+              "leftValue": "={{ $('Configuration').first().json.alertSignalTypes.includes($json.signalType) && ($json.confidence ?? 0) >= $('Configuration').first().json.minConfidence }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e62638c3-2ac4-5281-9bb4-b0f6626e2b10",
+      "name": "Signal row",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1200,
+        100
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "44702737-eca2-5597-be9b-309e5db024ca",
+              "name": "eventId",
+              "type": "string",
+              "value": "={{ [$json.ats, $json.companySlug, $json.signalType, $json.observedAt].join('|') }}"
+            },
+            {
+              "id": "f3e2739e-0f80-5d42-9339-1cd6ae34be77",
+              "name": "observedAt",
+              "type": "string",
+              "value": "={{ $json.observedAt }}"
+            },
+            {
+              "id": "b30616a3-10a4-5541-a143-492ec6a9eb62",
+              "name": "company",
+              "type": "string",
+              "value": "={{ $json.companyName || $json.companySlug }}"
+            },
+            {
+              "id": "05074f12-9024-5e23-9531-7577067ff456",
+              "name": "signalType",
+              "type": "string",
+              "value": "={{ $json.signalType }}"
+            },
+            {
+              "id": "36679e11-128f-55a5-96a8-8f8f0f5e3bda",
+              "name": "category",
+              "type": "string",
+              "value": "={{ $json.category }}"
+            },
+            {
+              "id": "01f9e7fd-7cb7-50ec-b39b-011cdfed15f4",
+              "name": "statement",
+              "type": "string",
+              "value": "={{ $json.statement }}"
+            },
+            {
+              "id": "406d1064-ae33-5f69-bf95-fb7b1fb843b4",
+              "name": "interpretation",
+              "type": "string",
+              "value": "={{ $json.interpretation }}"
+            },
+            {
+              "id": "fdc2a0cd-b497-5f1e-9c2d-37e2ab941a04",
+              "name": "confidence",
+              "type": "number",
+              "value": "={{ $json.confidence }}"
+            },
+            {
+              "id": "d3995eb2-400a-54c6-b3f1-d3497a306838",
+              "name": "exampleRoles",
+              "type": "string",
+              "value": "={{ ($json.evidence || []).slice(0, 3).map(e => e.title).join('; ') }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "f1bd1f7a-b06e-51f9-b61e-4e6e594626c4",
+      "name": "Signals history",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1440,
+        100
+      ],
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "={{ $('Configuration').first().json.spreadsheetUrl }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Signals"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "eventId"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "notes": "Writes to the 'Signals' tab. Re-running updates the row with the same eventId."
+    },
+    {
+      "id": "66f9ddd5-584f-5614-a5d7-23f99301282d",
+      "name": "Build account digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        640
+      ],
+      "parameters": {
+        "jsCode": "// One Slack message per run: new or reopened roles and the selected signals, grouped by account.\nconst cfg = $('Configuration').first().json;\nconst wanted = new Set(cfg.alertSignalTypes || []);\nconst accounts = new Map();\nconst entry = (r) => {\n  const key = r.companyName || r.companySlug || 'unknown';\n  if (!accounts.has(key)) accounts.set(key, { roles: [], signals: [] });\n  return accounts.get(key);\n};\nfor (const item of $input.all()) {\n  const r = item.json;\n  if (r.recordType === 'job' && (r.changeType === 'new' || r.changeType === 'reopened')) {\n    entry(r).roles.push(r.changeType === 'reopened' ? r.title + ' (reopened)' : r.title);\n  } else if (r.recordType === 'signal' && wanted.has(r.signalType) && (r.confidence ?? 0) >= cfg.minConfidence) {\n    entry(r).signals.push(r.statement);\n  }\n}\nif (accounts.size === 0) return [];\nconst out = ['*Hiring changes at your accounts*'];\nfor (const [name, a] of [...accounts.entries()].sort((x, y) => x[0].localeCompare(y[0]))) {\n  const parts = [];\n  if (a.roles.length) {\n    const shown = a.roles.slice(0, 5).join('; ');\n    parts.push(a.roles.length + ' new role' + (a.roles.length > 1 ? 's' : '') + ': ' + shown + (a.roles.length > 5 ? ' …' : ''));\n  }\n  for (const statement of a.signals) parts.push('Signal: ' + statement);\n  out.push('• *' + name + '*: ' + parts.join(' | '));\n}\nreturn [{ json: { text: out.join('\\n') } }];"
+      }
+    },
+    {
+      "id": "981c56b4-ce98-582a-a764-37a127f386c4",
+      "name": "Post digest to Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        640
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuration').first().json.slackWebhookUrl }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: $json.text }) }}",
+        "options": {}
+      },
+      "notes": "Posts only when there is something new."
+    },
+    {
+      "id": "e37ec6a3-75d4-589d-a522-7b0b1dbd48e2",
+      "name": "Collect unread boards",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Boards the Actor could not read in this run: nothing was written for them, and the next run retries.\nconst unread = $input.all().map(i => i.json).map(c => (c.companyName || c.companySlug) + ' (' + c.ats + ': ' + (c.errorCode || c.status) + ')');\nif (unread.length === 0) return [];\nreturn [{ json: { text: 'Job boards not read this run (retried next run): ' + unread.join(', ') } }];"
+      }
+    },
+    {
+      "id": "680edb63-c61b-5168-83d6-e9f486cfd4f2",
+      "name": "Warn about unread boards",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuration').first().json.slackWebhookUrl }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: $json.text }) }}",
+        "options": {}
+      },
+      "notes": "Lists boards that returned an error or an incomplete read."
+    },
+    {
+      "id": "870bf0a8-d417-5fec-9a05-7d3313d0a9e8",
+      "name": "Alert: run failed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        700,
+        820
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuration').first().json.slackWebhookUrl }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: 'ATS Job Changes Feed run failed: ' + ($json.error?.message || 'unknown error') + '. Nothing was written to Google Sheets.' }) }}",
+        "options": {}
+      },
+      "notes": "Bad token, input error, or a run longer than 5 minutes."
+    }
+  ],
+  "connections": {
+    "Every weekday at 7:00": {
+      "main": [
+        [
+          {
+            "node": "Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuration": {
+      "main": [
+        [
+          {
+            "node": "Run ATS Job Changes Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run ATS Job Changes Feed": {
+      "main": [
+        [
+          {
+            "node": "Route by record type",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build account digest",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alert: run failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by record type": {
+      "main": [
+        [
+          {
+            "node": "Job change row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Board read?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alert-worthy signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Job change row": {
+      "main": [
+        [
+          {
+            "node": "Job changes history",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Board read?": {
+      "main": [
+        [
+          {
+            "node": "Account row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Collect unread boards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Account row": {
+      "main": [
+        [
+          {
+            "node": "Accounts snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert-worthy signals": {
+      "main": [
+        [
+          {
+            "node": "Signal row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Signal row": {
+      "main": [
+        [
+          {
+            "node": "Signals history",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build account digest": {
+      "main": [
+        [
+          {
+            "node": "Post digest to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect unread boards": {
+      "main": [
+        [
+          {
+            "node": "Warn about unread boards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}
