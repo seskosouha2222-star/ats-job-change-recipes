@@ -1,0 +1,10 @@
+{
+  "expertQuery": "winner-name~\"{{Company name}}\"",
+  "noticeKinds": [
+    "awards"
+  ],
+  "monitorId": "{{Monitor ID}}",
+  "lookbackDays": 90,
+  "includeDescription": false,
+  "maxNoticesPerRun": 25
+}

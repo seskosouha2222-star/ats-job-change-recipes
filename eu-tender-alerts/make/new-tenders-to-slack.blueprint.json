@@ -1,0 +1,158 @@
+{
+  "name": "New EU tenders and deadline changes to Slack (EU Tender Alerts)",
+  "flow": [
+    {
+      "id": 1,
+      "module": "apify:runActorNew",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "actor_search_type": "store",
+        "actorId": "qRYeOEc5O9BTeLUBH",
+        "runSync": true,
+        "inputBodyqRYeOEc5O9BTeLUBH": "{\n  \"keywords\": [\n    \"software\",\n    \"cloud\"\n  ],\n  \"cpvCodes\": [\n    \"72000000\",\n    \"48000000\"\n  ],\n  \"countries\": [\n    \"FR\",\n    \"DE\"\n  ],\n  \"noticeKinds\": [\n    \"tenders\",\n    \"updates\"\n  ],\n  \"monitorId\": \"make-tender-alerts\",\n  \"firstRun\": \"baseline\",\n  \"includeDescription\": false,\n  \"maxNoticesPerRun\": 50\n}",
+        "maxTotalChargeUsd": "1"
+      },
+      "metadata": {
+        "designer": {
+          "x": 0,
+          "y": 0
+        },
+        "restore": {
+          "expect": {
+            "actor_search_type": {
+              "label": "Apify Store Actors"
+            },
+            "runSync": {
+              "mode": "chose"
+            },
+            "actorId": {
+              "mode": "chose",
+              "label": "EU Tender Alerts — New Tenders, Updates & Awards from TED (agitools/eu-tender-alerts)"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "module": "apify:fetchDatasetItems",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "datasetId": "{{1.defaultDatasetId}}",
+        "type": "clean",
+        "format": "json",
+        "limit": "100000"
+      },
+      "metadata": {
+        "designer": {
+          "x": 300,
+          "y": 0
+        },
+        "restore": {
+          "expect": {
+            "type": {
+              "label": "Clean"
+            },
+            "format": {
+              "label": "JSON"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "module": "json:TransformToJSON",
+      "version": 1,
+      "parameters": {
+        "space": ""
+      },
+      "mapper": {
+        "object": "{{if(2.changeType = \"tender_update\"; \"Tender update\"; \"New tender\")}}: {{2.title}} | {{2.buyerName}} ({{2.buyerCountry}}) | deadline {{ifempty(2.deadlineDate; \"not stated\")}} | {{2.noticeUrl}}"
+      },
+      "metadata": {
+        "designer": {
+          "x": 600,
+          "y": 0
+        }
+      },
+      "filter": {
+        "name": "New tenders and updates",
+        "conditions": [
+          [
+            {
+              "a": "{{2.recordType}}",
+              "b": "notice",
+              "o": "text:equal"
+            },
+            {
+              "a": "{{2.changeType}}",
+              "b": "new_tender",
+              "o": "text:equal"
+            }
+          ],
+          [
+            {
+              "a": "{{2.recordType}}",
+              "b": "notice",
+              "o": "text:equal"
+            },
+            {
+              "a": "{{2.changeType}}",
+              "b": "tender_update",
+              "o": "text:equal"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "module": "http:MakeRequest",
+      "version": 4,
+      "parameters": {
+        "authenticationType": "noAuth",
+        "tlsType": ""
+      },
+      "mapper": {
+        "url": "https://hooks.slack.com/services/REPLACE/WITH/YOUR_WEBHOOK",
+        "method": "post",
+        "contentType": "json",
+        "inputMethod": "jsonString",
+        "jsonStringBodyContent": "{\"text\": {{3.json}}}",
+        "parseResponse": false,
+        "stopOnHttpError": true,
+        "timeout": "40",
+        "allowRedirects": true,
+        "shareCookies": false,
+        "requestCompressedContent": true
+      },
+      "metadata": {
+        "designer": {
+          "x": 900,
+          "y": 0
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "instant": false,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": true,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false,
+      "freshVariables": false
+    },
+    "designer": {
+      "orphans": []
+    }
+  }
+}

@@ -1,0 +1,260 @@
+{
+  "name": "New EU tenders and deadline changes to Slack (EU Tender Alerts)",
+  "nodes": [
+    {
+      "id": "8f476d2f-be24-5117-b29c-3d95dfac3c4f",
+      "name": "Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        -300
+      ],
+      "parameters": {
+        "content": "## New EU tenders and deadline changes → Slack\n\n### How it works\nEvery morning this workflow runs the EU Tender Alerts Actor on Apify for your keywords, CPV codes and buyer countries. The Actor searches TED (Tenders Electronic Daily), the EU's official procurement journal, and remembers what it delivered on the previous run of the same `monitorId`. The filters keep notices that are a **new tender** or a **tender update** (for example a moved deadline), and each one is posted to Slack as one message with the title, buyer, country, deadline and link.\n\nThe first run only records the current notices (`firstRun: baseline`) and posts nothing. A run with nothing new posts nothing, so a tender is never announced twice.\n\n### Setup\n1. In Apify, copy your API token (Settings → API & Integrations).\n2. In n8n, create a **Header Auth** credential with Name `Authorization` and Value `Bearer <your token>`, and select it in **Run EU Tender Alerts**.\n3. In the same node, edit `keywords`, `cpvCodes` and `countries` in the JSON body (two-letter country codes; 8-digit CPV codes include their sub-codes).\n4. In Slack, create an incoming webhook and paste its URL into **Post to Slack**.\n5. Activate the workflow.\n\n### Customization\n- Add `awards` to `noticeKinds` and a third condition to follow contract awards.\n- Use a different `monitorId` for each watch.\n- Set `minValue` to skip small contracts.\n- Change the schedule in **Every morning**.\n\nThe Actor is pay-per-event on Apify (notices already delivered are free) and `maxTotalChargeUsd` caps each run. Tender data: TED, © European Union. Built by AGI Tools, the Actor's publisher.",
+        "height": 820,
+        "width": 480
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Fetch what is new since the last run\nRuns the Actor and waits for its results. Only notices not yet delivered to this watch come back, plus one summary record. If Apify fails or times out, the execution stops with an error and nothing is posted.",
+        "height": 340,
+        "width": 480,
+        "color": 7
+      },
+      "id": "5d40ddb0-da7e-5ac0-83ca-93012af1ef7b",
+      "name": "Section: fetch changes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -180
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Alert on new tenders and updates\nKeeps only notice records whose change is a new tender or a tender update, then posts one Slack message per notice. n8n encodes the message, so quotes or line breaks in titles are safe.",
+        "height": 340,
+        "width": 720,
+        "color": 7
+      },
+      "id": "e512e3ca-8ab4-586d-bd6f-65318b749c26",
+      "name": "Section: alert",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        420,
+        -180
+      ]
+    },
+    {
+      "id": "3ab668c4-23a9-569c-b65e-dc5b2019b45d",
+      "name": "Every morning",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "833c80b1-f84b-582e-bc13-c46ca905f893",
+      "name": "Run EU Tender Alerts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "notes": "Credential: Header Auth, name 'Authorization', value 'Bearer <your Apify API token>'. Keep monitorId unchanged between runs: it is the memory that makes each run return only new notices. maxTotalChargeUsd caps what one run can cost.",
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/agitools~eu-tender-alerts/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "maxTotalChargeUsd",
+              "value": "1"
+            },
+            {
+              "name": "clean",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"keywords\": [\n    \"software\",\n    \"cloud\"\n  ],\n  \"cpvCodes\": [\n    \"72000000\",\n    \"48000000\"\n  ],\n  \"countries\": [\n    \"FR\",\n    \"DE\"\n  ],\n  \"noticeKinds\": [\n    \"tenders\",\n    \"updates\"\n  ],\n  \"monitorId\": \"n8n-tender-alerts\",\n  \"firstRun\": \"baseline\",\n  \"includeDescription\": false,\n  \"maxNoticesPerRun\": 50\n}",
+        "options": {
+          "timeout": 300000
+        }
+      }
+    },
+    {
+      "id": "863b4e0e-87aa-5c9b-a866-37d4c66b6325",
+      "name": "Notices only",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "16afde91-5e32-5e33-a858-8ffbbe4580f6",
+              "leftValue": "={{ $json.recordType }}",
+              "rightValue": "notice",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "02ee7a96-1ee3-57f4-b708-cb8a02f193fd",
+      "name": "New tender or update",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "5ec2da13-4f4e-5592-bc88-fbbbfd7ef849",
+              "leftValue": "={{ $json.changeType }}",
+              "rightValue": "new_tender",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "d0903813-db5a-5275-8d56-3b686fd2741a",
+              "leftValue": "={{ $json.changeType }}",
+              "rightValue": "tender_update",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "0f8fa307-7453-5c54-a2fc-c538ba781162",
+      "name": "Post to Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        0
+      ],
+      "notes": "Replace the URL with your own Slack incoming-webhook URL.",
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/REPLACE/WITH/YOUR_WEBHOOK",
+        "sendBody": true,
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.changeType === 'tender_update' ? 'Tender update' : 'New tender' }}: {{ $json.title }} | {{ $json.buyerName }} ({{ $json.buyerCountry }}) | deadline {{ $json.deadlineDate || 'not stated' }} | {{ $json.noticeUrl }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Every morning": {
+      "main": [
+        [
+          {
+            "node": "Run EU Tender Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run EU Tender Alerts": {
+      "main": [
+        [
+          {
+            "node": "Notices only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notices only": {
+      "main": [
+        [
+          {
+            "node": "New tender or update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New tender or update": {
+      "main": [
+        [
+          {
+            "node": "Post to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

@@ -103,3 +103,7 @@ The license covers this repository only. The ATS Job Changes Feed Actor is a sep
 terms and its own pricing.
 
 Not affiliated with Greenhouse, Lever, Ashby, Apify, Clay, n8n, Make, Zapier or Google. Built by AGI Tools Team.
+
+## EU Tender Alerts templates
+
+Templates for a second Actor, [EU Tender Alerts](https://apify.com/agitools/eu-tender-alerts) (new EU public tenders, updates and awards from TED), are in [`eu-tender-alerts/`](eu-tender-alerts/README.md): n8n and Make alerts to Slack, two Clay inputs and MCP configurations.
