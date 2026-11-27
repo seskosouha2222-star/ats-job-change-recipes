@@ -18,6 +18,7 @@ You run it in your own Apify account with your own token; nothing in this reposi
 | Job boards: keep postings in sync, remove expired ones | [SQLite](python/feed_to_sqlite.py), [Postgres](sql/postgres_upsert.sql), [Zapier paths](no-code/make-zapier-sheets.md#remove-expired-postings-from-a-job-board-zapier) | Code, Zapier |
 | Department and location trends | [Google Sheets tracker](google-sheets/README.md) (Companies sheet), company records in any recipe | Sheets |
 | Ask an AI assistant | [MCP setup for Claude, Cursor, VS Code, ChatGPT](mcp/README.md) | MCP |
+| Ask an AI assistant live hiring questions (who is hiring, compare companies, search jobs) | [Hiring Data MCP Server setup](hiring-data-mcp/README.md) | MCP |
 | Your own code | [Python](python/), [Node.js](javascript/ats-job-changes.mjs) | Code |
 | Learn the pattern: diff one Greenhouse board yourself, no Actor, standard library only | [greenhouse_snapshot_diff.py](python/greenhouse_snapshot_diff.py) (15 offline tests); walkthrough: [How to detect hiring changes from public job-board APIs](https://agitools.hashnode.dev/how-to-detect-hiring-changes-from-public-job-board-apis-and-the-three-mistakes-that-make-them-useless) | Code |
 

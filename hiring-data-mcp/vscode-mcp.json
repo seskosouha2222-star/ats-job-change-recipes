@@ -1,0 +1,19 @@
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "apify-token",
+      "description": "Apify API token",
+      "password": true
+    }
+  ],
+  "servers": {
+    "hiring-data": {
+      "type": "http",
+      "url": "https://agitools--hiring-data-mcp.apify.actor/mcp",
+      "headers": {
+        "Authorization": "Bearer ${input:apify-token}"
+      }
+    }
+  }
+}
