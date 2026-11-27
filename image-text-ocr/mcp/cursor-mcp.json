@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "image-text-ocr": {
+      "url": "https://mcp.apify.com?tools=agitools/image-text-ocr"
+    }
+  }
+}

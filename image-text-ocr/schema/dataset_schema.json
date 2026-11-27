@@ -1,0 +1,205 @@
+{
+  "actorSpecification": 1,
+  "fields": {
+    "type": "object",
+    "properties": {
+      "recordType": {
+        "type": "string",
+        "enum": [
+          "image"
+        ]
+      },
+      "url": {
+        "type": "string"
+      },
+      "status": {
+        "type": "string",
+        "enum": [
+          "ok",
+          "no_text",
+          "blocked",
+          "error"
+        ]
+      },
+      "errorCode": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "errorMessage": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "text": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "lineCount": {
+        "type": "integer"
+      },
+      "textUnits": {
+        "type": "integer"
+      },
+      "avgConfidence": {
+        "type": [
+          "number",
+          "null"
+        ]
+      },
+      "lines": {
+        "type": [
+          "array",
+          "null"
+        ],
+        "items": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string"
+            },
+            "confidence": {
+              "type": "number"
+            },
+            "box": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            }
+          },
+          "required": [
+            "text",
+            "confidence",
+            "box"
+          ]
+        }
+      },
+      "width": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "height": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "format": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "bytes": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "ocrMs": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "source": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "datasetId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rowIndex": {
+            "type": "integer"
+          },
+          "field": {
+            "type": "string"
+          }
+        }
+      },
+      "row": {
+        "type": [
+          "object",
+          "null"
+        ]
+      }
+    },
+    "required": [
+      "recordType",
+      "url",
+      "status",
+      "text",
+      "lineCount"
+    ]
+  },
+  "views": {
+    "overview": {
+      "title": "Images",
+      "transformation": {
+        "fields": [
+          "url",
+          "status",
+          "text",
+          "lineCount",
+          "textUnits",
+          "avgConfidence",
+          "width",
+          "height",
+          "errorCode"
+        ]
+      },
+      "display": {
+        "component": "table",
+        "properties": {
+          "url": {
+            "label": "Image",
+            "format": "link"
+          },
+          "status": {
+            "label": "Status"
+          },
+          "text": {
+            "label": "Text"
+          },
+          "lineCount": {
+            "label": "Lines",
+            "format": "number"
+          },
+          "textUnits": {
+            "label": "Billed text events",
+            "format": "number"
+          },
+          "avgConfidence": {
+            "label": "Confidence",
+            "format": "number"
+          },
+          "width": {
+            "label": "Width",
+            "format": "number"
+          },
+          "height": {
+            "label": "Height",
+            "format": "number"
+          },
+          "errorCode": {
+            "label": "Error"
+          }
+        }
+      }
+    }
+  }
+}
