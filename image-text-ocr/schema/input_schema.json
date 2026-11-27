@@ -1,0 +1,89 @@
+{
+  "title": "Image Text OCR input",
+  "type": "object",
+  "description": "Extract printed text from image links or from the images in one of your datasets. <strong>Pricing:</strong> $0.003 per image with text, counted once per started 20 lines of text (photos, labels and screenshots are almost always one), and $0.001 per analysed image without text. Files that cannot be downloaded, are not images or are blocked are free. Set <strong>Maximum cost per run</strong> in the run options to cap a run.",
+  "schemaVersion": 1,
+  "properties": {
+    "imageUrls": {
+      "title": "Image URLs",
+      "type": "array",
+      "editor": "stringList",
+      "description": "Direct links to images (PNG, JPEG, WebP, GIF, BMP, TIFF), up to 15 MB each. Use this, a dataset below, or both.",
+      "prefill": [
+        "https://raw.githubusercontent.com/seskosouha2222-star/ats-job-change-recipes/main/samples/image-text-ocr/receipt.png"
+      ]
+    },
+    "datasetId": {
+      "title": "Or: one of your Apify datasets",
+      "type": "string",
+      "editor": "resourcePicker",
+      "resourceType": "dataset",
+      "resourcePermissions": [
+        "READ"
+      ],
+      "description": "A dataset in your account, for example the output of a scraper run. It is read only. Each row's image is read and the text is returned with the fields you choose to keep."
+    },
+    "imageField": {
+      "title": "Dataset field with the image",
+      "type": "string",
+      "editor": "textfield",
+      "default": "imageUrl",
+      "description": "The field that holds the image link. Dotted paths work: `images.0.url`, `media.displayUrl`. The field may hold one link, a list of links, or a list of objects with a `url`."
+    },
+    "keepFields": {
+      "title": "Dataset fields to keep",
+      "type": "array",
+      "editor": "stringList",
+      "description": "Fields of the source row copied into each result under `row`, for example `id`, `url`, `caption`. Up to 30. Default: none."
+    },
+    "maxImagesPerRow": {
+      "title": "Images per dataset row",
+      "type": "integer",
+      "default": 1,
+      "minimum": 1,
+      "maximum": 20,
+      "description": "When the field holds a list, how many images of each row to read."
+    },
+    "maxImages": {
+      "title": "Maximum images per run",
+      "type": "integer",
+      "default": 50,
+      "minimum": 1,
+      "maximum": 2000,
+      "description": "The run stops after this many images. It also stops at the maximum cost per run you set in the run options, whichever comes first. With text-heavy pages the cost depends on the amount of text, not only on the number of images."
+    },
+    "minConfidence": {
+      "title": "Minimum line confidence",
+      "type": "string",
+      "editor": "select",
+      "default": "0.5",
+      "enum": [
+        "0",
+        "0.3",
+        "0.5",
+        "0.7",
+        "0.9"
+      ],
+      "enumTitles": [
+        "0 (keep every line)",
+        "0.3",
+        "0.5 (default)",
+        "0.7",
+        "0.9 (only very certain lines)"
+      ],
+      "description": "Lines the engine is less sure about than this are dropped."
+    },
+    "includeLines": {
+      "title": "Return every line with its position",
+      "type": "boolean",
+      "default": true,
+      "description": "On: each result has `lines` with text, confidence and a bounding box in original image pixels. Off: only the joined text."
+    },
+    "respectRobotsTxt": {
+      "title": "Respect robots.txt of image hosts",
+      "type": "boolean",
+      "default": true,
+      "description": "On: an image is skipped (free) when its host's robots.txt disallows fetching it. Turn off only for hosts you own or are allowed to fetch."
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "imageUrls": [
+    "{{Image URL}}"
+  ],
+  "maxImages": 1,
+  "minConfidence": "0.5",
+  "includeLines": false
+}

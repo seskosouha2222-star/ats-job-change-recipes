@@ -1,0 +1,185 @@
+{
+  "name": "Image to text API: webhook to OCR to JSON (Image Text OCR)",
+  "nodes": [
+    {
+      "id": "4259778f-dfff-568a-8625-668a0c3c0c06",
+      "name": "Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        -320
+      ],
+      "parameters": {
+        "content": "## Image to text API: webhook \u2192 OCR \u2192 JSON response\n\n### How it works\nSend a POST request with a list of image URLs to this workflow's webhook. It runs the Image Text OCR Actor on Apify, which downloads each image, reads the text with OCR models embedded in the Actor (no OCR API key, images are processed inside the run), and returns one JSON object per image: `status`, the full `text`, `lineCount` and `avgConfidence`.\n\nRequest body:\n```json\n{\"imageUrls\": [\"https://example.com/receipt.png\"]}\n```\n\n### Setup\n1. In Apify, copy your API token (Settings \u2192 API & Integrations).\n2. In n8n, create a **Header Auth** credential with Name `Authorization` and Value `Bearer <your token>`, and select it in **Run Image Text OCR**.\n3. Activate the workflow and send requests to the production webhook URL.\n\n### Customization\n- Set `includeLines` to `true` in **Run Image Text OCR** to get every line with its confidence and bounding box.\n- Raise `minConfidence` to drop uncertain lines.\n- Lower `maxImages` to cap the number of images per request.\n\nImage Text OCR is pay-per-event on Apify: an image with text is charged per started 20 recognized lines, an image without text costs less, and images that fail to download, are not images or are blocked are free. `maxTotalChargeUsd` caps what one request can cost.",
+        "height": 760,
+        "width": 520
+      }
+    },
+    {
+      "id": "38f324d7-8b80-57ae-9388-9ce578b1df5c",
+      "name": "Image URLs in",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "536ab306-fb32-55ba-b67a-8e7aeaa26277",
+      "notes": "POST JSON {\"imageUrls\": [\"https://...\"]}. Up to 20 URLs per request with the default settings.",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "image-to-text",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "e326a625-ea3a-5ee9-b528-693397df4ffa",
+      "name": "Run Image Text OCR",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        0
+      ],
+      "notes": "Credential: Header Auth, name 'Authorization', value 'Bearer <your Apify API token>'. maxTotalChargeUsd caps what one request can cost.",
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/agitools~image-text-ocr/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "maxTotalChargeUsd",
+              "value": "0.25"
+            },
+            {
+              "name": "clean",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ imageUrls: ($json.body.imageUrls || []).slice(0, 20), maxImages: 20, minConfidence: \"0.5\", includeLines: false }) }}",
+        "options": {
+          "timeout": 300000
+        }
+      }
+    },
+    {
+      "id": "7cb2dc33-5cf8-5566-bf3c-708df6707432",
+      "name": "Keep result fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1572a392-a7f4-5539-9a0c-175951e4987d",
+              "name": "url",
+              "value": "={{ $json.url }}",
+              "type": "string"
+            },
+            {
+              "id": "70f63435-aaba-505d-b3ac-da699afa949a",
+              "name": "status",
+              "value": "={{ $json.status }}",
+              "type": "string"
+            },
+            {
+              "id": "18134b90-7cf7-585a-b816-3e25faf18881",
+              "name": "text",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "a5f56775-4143-57bd-8954-abfad1f51535",
+              "name": "lineCount",
+              "value": "={{ $json.lineCount }}",
+              "type": "number"
+            },
+            {
+              "id": "54d3a3f3-1a41-53e3-81df-85e23b4e3775",
+              "name": "avgConfidence",
+              "value": "={{ $json.avgConfidence }}",
+              "type": "number"
+            },
+            {
+              "id": "215af409-69c0-5832-bf0b-3d9f7abcf10a",
+              "name": "errorCode",
+              "value": "={{ $json.errorCode }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "43fc86b1-18b7-5b31-83cc-742d81e2e86c",
+      "name": "Return JSON",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        780,
+        0
+      ],
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Image URLs in": {
+      "main": [
+        [
+          {
+            "node": "Run Image Text OCR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Image Text OCR": {
+      "main": [
+        [
+          {
+            "node": "Keep result fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep result fields": {
+      "main": [
+        [
+          {
+            "node": "Return JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}
