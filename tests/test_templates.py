@@ -197,6 +197,19 @@ def test_mcp_configs_point_to_one_actor():
         json.loads(text)
 
 
+def test_hiring_data_mcp_configs_point_to_the_server_and_carry_no_token():
+    for path in (ROOT / "hiring-data-mcp").glob("*.json"):
+        cfg = json.loads(path.read_text())
+        servers = cfg.get("mcpServers") or cfg.get("servers")
+        assert len(servers) == 1, path.name
+        (server,) = servers.values()
+        # Direct endpoint, or Apify's MCP server with the `actors` tools (fetch-actor-mcp-tool-list, call-actor-mcp-tool)
+        assert server["url"] in ("https://agitools--hiring-data-mcp.apify.actor/mcp",
+                                 "https://mcp.apify.com?tools=actors"), path.name
+        auth = (server.get("headers") or {}).get("Authorization")
+        assert auth in (None, "Bearer ${env:APIFY_TOKEN}", "Bearer ${input:apify-token}"), path.name
+
+
 SECRET_PATTERNS = [re.compile(p) for p in (r"apify_api_[A-Za-z0-9]{20,}", r"hooks\.slack\.com/services/T[A-Z0-9]{6,}",
                                            r"Bearer [A-Za-z0-9_\-]{24,}", r"xox[abp]-[A-Za-z0-9-]{10,}")]
 

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "hiring-data": {
+      "url": "https://agitools--hiring-data-mcp.apify.actor/mcp",
+      "headers": {
+        "Authorization": "Bearer ${env:APIFY_TOKEN}"
+      }
+    }
+  }
+}
