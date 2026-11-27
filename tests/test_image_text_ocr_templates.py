@@ -140,6 +140,23 @@ def test_csv_from_json(tmp_path):
         "2 images: 1 with text, 0 without text, 1 failed, 0 blocked"
 
 
+def test_kept_fields_that_collide_with_ocr_columns_are_kept_under_row_prefix(tmp_path):
+    # Codex P2 on PR #9: the README's own example (--keep title,url) lost the page URL to the image URL and wrote
+    # two "url" columns.
+    page = dict(RECEIPT, row={"title": "Bakery", "url": "https://example.com/p/1", "status": "in stock"})
+    items = tmp_path / "items.json"
+    items.write_text(json.dumps([page, BROKEN]))
+    out = tmp_path / "text.csv"
+    assert ocr_csv.main(["--from-json", str(items), "--keep", "title,url,status,title", "--out", str(out)]) == 0
+    header = next(csv.reader(out.open(encoding="utf-8")))
+    assert header == ["title", "row.url", "row.status"] + ocr_csv.BASE_COLUMNS
+    assert len(header) == len(set(header))
+    rows = list(csv.DictReader(out.open(encoding="utf-8")))
+    assert rows[0]["row.url"] == "https://example.com/p/1" and rows[0]["url"] == "https://example.com/receipt.png"
+    assert rows[0]["row.status"] == "in stock" and rows[0]["status"] == "ok"
+    assert rows[1]["row.url"] == "" and rows[1]["url"] == "https://example.com/missing.png"
+
+
 def test_run_field_handles_dict_and_object():
     class Run:
         default_dataset_id = "d1"

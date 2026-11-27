@@ -2,7 +2,8 @@
 
 Typical use: a scraper run produced product, listing or post rows with an image URL column. This script runs
 Image Text OCR (agitools/image-text-ocr) in dataset mode on those rows and writes one CSV row per image with the
-fields you chose to keep, the recognized text, the number of lines and the average confidence.
+fields you chose to keep, the recognized text, the number of lines and the average confidence. A kept field named
+like an OCR column (for example `url`) is written as `row.url`, next to the image's `url`.
 
     pip install "apify-client>=1.9"
     export APIFY_TOKEN=...            # Apify Console -> Settings -> API & Integrations
@@ -67,14 +68,24 @@ def run_actor(inp: dict, token: str, max_charge_usd: str) -> list[dict]:
     return list(client.dataset(run_field(run, "defaultDatasetId", "default_dataset_id")).iterate_items())
 
 
+def kept_columns(keep: list[str]) -> list[tuple[str, str]]:
+    """(source field, CSV column) for each kept field, once each. A kept field named like an OCR column (`url`,
+    `status`, ...) becomes `row.<name>`, so the page's value and the OCR value both survive."""
+    cols: list[tuple[str, str]] = []
+    for field in dict.fromkeys(keep):
+        cols.append((field, f"row.{field}" if field in BASE_COLUMNS else field))
+    return cols
+
+
 def to_rows(items: Iterable[dict], keep: list[str]) -> list[dict]:
     """One flat row per image: kept source fields first, then the OCR result. Line breaks stay inside the text cell."""
+    cols = kept_columns(keep)
     rows = []
     for it in items:
         if it.get("recordType", "image") != "image":
             continue
         kept = it.get("row") or {}
-        row = {k: kept.get(k) for k in keep}
+        row = {col: kept.get(field) for field, col in cols}
         for col in BASE_COLUMNS:
             row[col] = it.get(col)
         rows.append(row)
@@ -82,8 +93,9 @@ def to_rows(items: Iterable[dict], keep: list[str]) -> list[dict]:
 
 
 def write_csv(rows: list[dict], keep: list[str], out: Path) -> None:
+    header = [col for _, col in kept_columns(keep)] + BASE_COLUMNS
     with out.open("w", newline="", encoding="utf-8") as fh:
-        w = csv.DictWriter(fh, fieldnames=keep + BASE_COLUMNS, extrasaction="ignore")
+        w = csv.DictWriter(fh, fieldnames=header, extrasaction="ignore")
         w.writeheader()
         for row in rows:
             w.writerow({k: ("" if v is None else v) for k, v in row.items()})

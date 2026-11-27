@@ -39,8 +39,9 @@ export APIFY_TOKEN=...   # Apify Console -> Settings -> API & Integrations
 python python/ocr_dataset_to_csv.py --dataset <datasetId> --image-field imageUrl --keep title,url --out text.csv
 ```
 
-`--image-field` accepts a dot path (`images.0`, `media.url`). The CSV has the kept fields first, then `url`, `status`,
-`lineCount`, `avgConfidence`, `text` and `errorCode`. `--max-charge` (default `0.50`) caps the run. Without a token,
+`--image-field` accepts a dot path (`images.0`, `media.url`). The CSV has the kept fields first, then `url` (the image),
+`status`, `lineCount`, `avgConfidence`, `text` and `errorCode`. A kept field with the same name as one of these columns
+is written as `row.<name>`: with `--keep title,url` the page link is in `row.url` and the image link in `url`. `--max-charge` (default `0.50`) caps the run. Without a token,
 `--from-json items.json` converts saved Actor output to the same CSV.
 
 ## Clay
