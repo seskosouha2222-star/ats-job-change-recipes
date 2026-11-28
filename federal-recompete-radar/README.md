@@ -31,9 +31,12 @@ You run it in your own Apify account with your own token; nothing here needs a s
 
 ```bash
 cd python
-python expiring_contracts.py --from-file sample_recompete_run1.json
-python expiring_contracts.py --from-file sample_recompete_run2_illustration.json
+python expiring_contracts.py --from-file sample_recompete_run1.json --today 2026-11-28
+python expiring_contracts.py --from-file sample_recompete_run2_illustration.json --today 2026-11-28
 ```
+
+`--today` replays the sample on the day it was recorded. Leave it out on real runs: the script then uses the current
+date and marks contracts whose end date has gone by as `end date passed`.
 
 The first command writes `recompete_pipeline.csv` with seven contracts, soonest end date first, and prints a digest.
 The second applies one changed contract and one that left the window: rows are updated, not duplicated.
@@ -64,7 +67,7 @@ a week. Runs that find nothing new deliver nothing.
 | `obligatedUsd` | Money obligated so far |
 | `ceilingUsd` | Value with all options (a ceiling, not spending) |
 | `incumbent`, `incumbentUei` | Current recipient. The name is empty on awards that started before 4 April 2022 (the Actor withholds it for licensing reasons); the UEI and the link to the official record identify the recipient |
-| `status` | `in window`, or `left window` when the end date moved out of the window you watch |
+| `status` | `in window`; `left window` when the end date moved out of the window you watch; `end date passed` when the end date went by and the Actor reported no extension or other change (the script checks this on every run, because the Actor sends no record for a contract that simply ends) |
 | `lastChange` | What moved in the latest record for this contract |
 
 ## Cost

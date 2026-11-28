@@ -27,6 +27,7 @@ import csv
 import json
 import os
 import sys
+from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
@@ -62,6 +63,28 @@ def apply(pipeline: dict[str, dict], items: list[dict]) -> dict[str, list[dict]]
     return seen
 
 
+def reconcile(pipeline: dict[str, dict], today: date) -> list[str]:
+    """Mark contracts whose end date has passed. Returns the award IDs marked in this call.
+
+    The Actor reports `left_window` only when an end date MOVED out of the window. A contract that simply reaches its
+    end date produces no record, so the pipeline has to notice it by itself. A later `changed` record (for example an
+    extension) puts the contract back `in window`.
+    """
+    marked = []
+    for award_id, row in pipeline.items():
+        if row.get("status") != "in window":
+            continue
+        try:
+            ended = date.fromisoformat(row.get("endDate") or "") < today
+        except ValueError:
+            continue                     # no usable end date: leave the row as it is
+        if ended:
+            row["status"] = "end date passed"
+            row["lastChange"] = f"end date {row['endDate']} passed without a new record"
+            marked.append(award_id)
+    return marked
+
+
 def save_pipeline(path: Path, pipeline: dict[str, dict]) -> None:
     rows = sorted(pipeline.values(), key=lambda r: (r.get("status") != "in window", r.get("endDate") or ""))
     tmp = path.with_suffix(path.suffix + ".tmp")
@@ -79,7 +102,7 @@ def usd(value) -> str:
         return "amount not stated"
 
 
-def digest(seen: dict[str, list[dict]]) -> str:
+def digest(seen: dict[str, list[dict]], ended: list[str] | None = None) -> str:
     def who(i):
         return i.get("incumbent") or f"recipient UEI {i.get('incumbentUei')}"
 
@@ -91,6 +114,8 @@ def digest(seen: dict[str, list[dict]]) -> str:
         lines.append(f"CHANGED  {item['awardId']}: {describe(item.get('changes'))}")
     for item in seen["left_window"]:
         lines.append(f"LEFT WINDOW  {item['awardId']}: {describe(item.get('changes'))}")
+    for award_id in ended or []:
+        lines.append(f"END DATE PASSED  {award_id}: no extension or other change was reported; no longer listed as active")
     if not lines:
         return "No new, changed or left-window contracts in this run."
     return "\n".join(lines + ["Expiring contracts are not procurement announcements; confirm any follow-on in official solicitations."])
@@ -119,6 +144,8 @@ def main(argv=None) -> int:
     source.add_argument("--input", type=Path, help="Actor input as a JSON file; runs the Actor with APIFY_TOKEN")
     parser.add_argument("--pipeline", type=Path, default=Path("recompete_pipeline.csv"))
     parser.add_argument("--max-charge-usd", default="1.00", help="upper limit of what one run may cost (default 1.00)")
+    parser.add_argument("--today", type=date.fromisoformat, default=None,
+                        help="date used to recognise passed end dates, YYYY-MM-DD (default: today; for tests and replays)")
     args = parser.parse_args(argv)
     if args.from_file:
         items = json.loads(args.from_file.read_text(encoding="utf-8"))
@@ -126,9 +153,10 @@ def main(argv=None) -> int:
         items = run_actor(json.loads(args.input.read_text(encoding="utf-8")), args.max_charge_usd)
     pipeline = load_pipeline(args.pipeline)
     seen = apply(pipeline, items)
+    ended = reconcile(pipeline, args.today or date.today())
     # The pipeline file is written only after the whole run was applied, so a failed run never leaves it half updated.
     save_pipeline(args.pipeline, pipeline)
-    print(digest(seen))
+    print(digest(seen, ended))
     print(f"\n{len(pipeline)} contracts in {args.pipeline}")
     return 0
 
