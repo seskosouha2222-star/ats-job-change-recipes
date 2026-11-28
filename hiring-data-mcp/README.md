@@ -1,7 +1,7 @@
 # Ask an AI assistant who is hiring (MCP server)
 
 [Hiring Data MCP Server](https://apify.com/agitools/hiring-data-mcp) (`agitools/hiring-data-mcp`) gives an AI
-assistant five read-only tools over companies' public job boards on Greenhouse, Lever and Ashby, read through the
+assistant seven read-only tools over companies' public job boards on Greenhouse, Lever and Ashby, read through the
 providers' official public APIs:
 
 | Tool | Answers |
@@ -11,6 +11,8 @@ providers' official public APIs:
 | `hiring_summary` | Open jobs by department and location, remote share, seniority mix, technologies named in titles |
 | `compare_hiring` | The same figures side by side for up to 10 companies |
 | `search_jobs` | Jobs matching keywords across up to 10 companies |
+| `tech_mentions` | Technologies a company names in its open job posts, with the number of roles, a hiring signal and evidence |
+| `compare_tech_mentions` | Which of up to 10 companies name given technologies in their job posts |
 
 Use it for live questions in a conversation. For a scheduled feed of what changed since the last run, use the
 [ATS Job Changes Feed recipes](../README.md) in this repository instead.
@@ -40,6 +42,8 @@ Starting the Actor with the Start button does nothing: it works only through its
   share?"
 - "Search security engineer jobs at greenhouse:stripe and ashby:notion and list the remote ones with their links."
 - "List the newest 10 sales jobs at lever:palantir in London."
+- "Which of greenhouse:discord, lever:palantir and ashby:notion name Kubernetes, Snowflake or Salesforce in their
+  open job posts? Show one job link per match." ([worked example with real output](tech-mentions-example.md))
 
 ## What it costs
 - $0.005 per successful one-company call, $0.01 per successful multi-company call. Connecting, listing the tools and
@@ -52,6 +56,8 @@ Starting the Actor with the Start button does nothing: it works only through its
 ## Limits
 - Up to 10 companies per call and 100 jobs per answer; board reads are cached for up to 10 minutes.
 - Greenhouse, Lever and Ashby only; Greenhouse pay ranges are not included yet.
+- Technology results are mentions in job posts and hiring signals. They are not proof that a company bought or
+  runs a technology.
 - No applicant data and no contact details; job descriptions only on request, cut to 1,500 characters.
 
 Not affiliated with Greenhouse, Lever, Ashby, Apify, Anthropic, Cursor or Microsoft. Built by AGI Tools Team.
