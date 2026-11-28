@@ -1,0 +1,158 @@
+{
+  "title": "Federal Contract Recompete Radar input",
+  "description": "Watch US federal contracts whose period of performance ends soon. Pass the same monitorId on every scheduled run (or run a saved Task): each run returns only contracts this watch has not delivered yet, or whose dates or amounts changed. Minimal call: {\"naicsCodes\": [\"541512\"], \"minAwardAmount\": 1000000, \"monitorId\": \"it-services\"}. Pricing: $0.01 per successful run and $0.005 per contract delivered (unchanged contracts, the summary and failed runs are free); set a maximum charge on the run to cap spending. An expiring contract is a lead, not a solicitation.",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "naicsCodes": {
+      "title": "NAICS codes",
+      "type": "array",
+      "editor": "stringList",
+      "description": "Industry codes of the contracts to watch, 2 to 6 digits. 541512 = computer systems design; a shorter prefix such as 5415 covers every code starting with it.",
+      "prefill": [
+        "541512"
+      ]
+    },
+    "pscCodes": {
+      "title": "PSC codes",
+      "type": "array",
+      "editor": "stringList",
+      "description": "Product and service codes, 1 to 4 characters (for example R425 = engineering support, DA01 = IT application development support)."
+    },
+    "agencies": {
+      "title": "Awarding agencies",
+      "type": "array",
+      "editor": "stringList",
+      "description": "Full official names of top-tier awarding agencies, for example 'Department of Homeland Security' or 'General Services Administration'. A name the source does not know matches nothing (the run report says so)."
+    },
+    "states": {
+      "title": "Place of performance (states)",
+      "type": "array",
+      "editor": "stringList",
+      "description": "Two-letter US state or territory codes where the work is performed, for example VA, MD, DC."
+    },
+    "keywords": {
+      "title": "Keywords",
+      "type": "array",
+      "editor": "stringList",
+      "description": "Up to 5 search terms matched by the source against the contract description and related text (3 to 60 characters each)."
+    },
+    "minAwardAmount": {
+      "title": "Minimum award amount (USD)",
+      "type": "integer",
+      "minimum": 0,
+      "description": "Only contracts with at least this amount obligated so far. Leave empty for every size.",
+      "prefill": 1000000
+    },
+    "expiringWithinDays": {
+      "title": "Ending within (days)",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1095,
+      "default": 180,
+      "description": "Far edge of the window: contracts whose current period of performance ends within this many days from today."
+    },
+    "expiringFromDays": {
+      "title": "Ending no sooner than (days)",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1095,
+      "default": 0,
+      "description": "Near edge of the window. 0 = from today. Set 90 with 'Ending within' 365 to watch contracts ending in 3 to 12 months."
+    },
+    "activeWithinMonths": {
+      "title": "Reported activity within (months)",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 120,
+      "default": 36,
+      "description": "Only contracts with an action reported to the source in this period. Longer finds older multi-year contracts and makes the search broader."
+    },
+    "includeDetails": {
+      "title": "Include award details",
+      "type": "boolean",
+      "default": true,
+      "description": "Adds, per delivered contract: potential end date with all options, whether the end is an option period or the final period, obligations, ceiling, competition, set-aside, parent vehicle. One extra request per delivered contract."
+    },
+    "includeModifications": {
+      "title": "Include recent modifications",
+      "type": "boolean",
+      "default": false,
+      "description": "Adds the latest modifications of each delivered contract (option exercised, funding action, extension ...). One more request per delivered contract."
+    },
+    "maxModifications": {
+      "title": "Modifications per contract",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10,
+      "default": 5,
+      "description": "How many of the latest modifications to include."
+    },
+    "trackLeftWindow": {
+      "title": "Report contracts that leave the window",
+      "type": "boolean",
+      "default": true,
+      "description": "When a contract you received no longer ends in the window, look at its record: if its end date moved (extended or shortened) you get one 'left_window' record with the old and new dates."
+    },
+    "maxContractsPerRun": {
+      "title": "Maximum contracts per run",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2000,
+      "default": 200,
+      "description": "Upper limit of delivered (billed) contracts in one run, soonest ending first. The rest follow in the next run. The form starts at 25 so a first try costs at most $0.135; the default without a value is 200.",
+      "prefill": 25
+    },
+    "firstRun": {
+      "title": "First run",
+      "type": "string",
+      "editor": "select",
+      "enum": [
+        "deliver",
+        "baseline"
+      ],
+      "enumTitles": [
+        "Deliver every contract in the window",
+        "Record silently, deliver only what changes afterwards"
+      ],
+      "default": "deliver",
+      "description": "What the first run of a watch does with the contracts already in the window."
+    },
+    "monitorId": {
+      "title": "Watch name (monitorId)",
+      "type": "string",
+      "editor": "textfield",
+      "description": "Name of this watch, 1 to 40 letters, digits, '-' or '_'. Runs with the same name share one memory. Not needed when you run a saved Task: each Task has its own memory.",
+      "prefill": "it-services"
+    },
+    "stateStoreName": {
+      "title": "Memory store name (advanced)",
+      "type": "string",
+      "editor": "textfield",
+      "description": "Explicit name of the key-value store that holds the watch memory. Leave empty unless you manage stores yourself."
+    },
+    "emitSummary": {
+      "title": "Add a run summary record",
+      "type": "boolean",
+      "default": true,
+      "description": "One free record per run with the window, counts, the date of the latest source data load and the freshness note."
+    },
+    "requestTimeoutSecs": {
+      "title": "Request timeout (seconds)",
+      "type": "integer",
+      "minimum": 10,
+      "maximum": 120,
+      "default": 30,
+      "description": "Time allowed for one request to the source."
+    },
+    "maxRetries": {
+      "title": "Retries per request",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3,
+      "default": 2,
+      "description": "Retries after a timeout or a temporary error of the source."
+    }
+  },
+  "required": []
+}

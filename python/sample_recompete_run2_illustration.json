@@ -1,0 +1,76 @@
+[
+  {
+    "recordType": "contract",
+    "changeType": "changed",
+    "changes": [
+      {
+        "field": "endDate",
+        "before": "2027-02-06",
+        "after": "2028-02-06"
+      },
+      {
+        "field": "obligatedUsd",
+        "before": 3045341.56,
+        "after": 3235041.99
+      }
+    ],
+    "inWindow": true,
+    "awardId": "91003124F0012",
+    "awardingAgency": "Department of Education",
+    "naicsCode": "541512",
+    "incumbent": "INTERACTIVE PROCESS TECHNOLOGY, LLC",
+    "incumbentNameWithheld": false,
+    "incumbentUei": "FECDBHGKD452",
+    "endDate": "2028-02-06",
+    "potentialEndDate": "2029-02-06",
+    "daysToEnd": 435,
+    "expirationKind": "option_period_ends",
+    "obligatedUsd": 3235041.99,
+    "baseAndExercisedOptionsUsd": 3235041.99,
+    "ceilingUsd": 4637923.01,
+    "confirmedSolicitation": false,
+    "monitorId": "education-it"
+  },
+  {
+    "recordType": "contract",
+    "changeType": "left_window",
+    "changes": [
+      {
+        "field": "endDate",
+        "before": "2026-12-09",
+        "after": "2027-06-09"
+      },
+      {
+        "field": "potentialEndDate",
+        "before": "2026-12-09",
+        "after": "2027-06-09"
+      }
+    ],
+    "inWindow": false,
+    "awardId": "91003123F0001",
+    "awardingAgency": "Department of Education",
+    "naicsCode": "541512",
+    "incumbent": "TECHNIK INC",
+    "incumbentNameWithheld": false,
+    "incumbentUei": "NPVCNCKSQNC7",
+    "endDate": "2027-06-09",
+    "potentialEndDate": "2027-06-09",
+    "daysToEnd": 193,
+    "expirationKind": "final_period_ends",
+    "obligatedUsd": 7632194.38,
+    "baseAndExercisedOptionsUsd": 7632194.38,
+    "ceilingUsd": 15076444.64,
+    "confirmedSolicitation": false,
+    "monitorId": "education-it"
+  },
+  {
+    "recordType": "summary",
+    "delivered": 2,
+    "unchanged": 5,
+    "byChange": {
+      "new": 0,
+      "changed": 1,
+      "left_window": 1
+    }
+  }
+]
