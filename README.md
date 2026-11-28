@@ -76,7 +76,7 @@ jobs are free in changes mode. Every recipe sets a spending cap per run (`maxTot
 (`run["defaultDatasetId"]`). The scripts here handle both.
 
 ## Expiring US federal contracts (a second change feed)
-[Federal Contract Recompete Radar](https://apify.com/agitools/federal-recompete-radar) applies the same pattern to
+[Expiring Federal Contracts Change Feed — Recompete Radar](https://apify.com/agitools/federal-recompete-radar) applies the same pattern to
 US federal contracts whose current period ends soon: [recipe and sample data](federal-recompete-radar/README.md),
 [Python pipeline](python/expiring_contracts.py) (offline tests included).
 

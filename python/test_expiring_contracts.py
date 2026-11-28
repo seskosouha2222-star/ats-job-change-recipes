@@ -1,4 +1,4 @@
-"""Offline tests for the Federal Contract Recompete Radar recipe (no network, no token)."""
+"""Offline tests for the Recompete Radar recipe (no network, no token)."""
 import csv
 import json
 from pathlib import Path

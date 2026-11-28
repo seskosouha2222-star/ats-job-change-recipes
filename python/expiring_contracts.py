@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Keep a pipeline of expiring US federal contracts from Federal Contract Recompete Radar
-(agitools/federal-recompete-radar).
+"""Keep a pipeline of expiring US federal contracts from the Recompete Radar
+("Expiring Federal Contracts Change Feed", agitools/federal-recompete-radar).
 
 The Actor returns only what moved since the last run of a watch: `new` contracts, `changed` contracts (dates or
 amounts moved) and contracts that `left_window` (their end date moved out of the window you watch). This script

@@ -1,6 +1,6 @@
 # Expiring US federal contracts → a pipeline you can work from
 
-[Federal Contract Recompete Radar](https://apify.com/agitools/federal-recompete-radar)
+[Expiring Federal Contracts Change Feed — Recompete Radar](https://apify.com/agitools/federal-recompete-radar)
 (`agitools/federal-recompete-radar`) watches US federal contracts whose current period ends inside a window you choose
 and returns only what moved since the last run of the watch: **new** contracts, **changed** contracts (dates or
 amounts moved) and contracts that **left the window**. It reads the official award data published on USAspending.gov.
