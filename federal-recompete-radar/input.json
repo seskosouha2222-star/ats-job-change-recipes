@@ -1,0 +1,8 @@
+{
+  "naicsCodes": ["541512"],
+  "agencies": ["Department of Education"],
+  "minAwardAmount": 1000000,
+  "expiringWithinDays": 90,
+  "maxContractsPerRun": 50,
+  "monitorId": "education-it"
+}
